@@ -20,6 +20,7 @@ export function cacheSet<T>(key: string, data: T): void {
   store.set(key, { data, expiresAt: Date.now() + TTL });
 }
 
-export function cacheKey(platform: string, username: string): string {
-  return `${platform}:${username.toLowerCase()}`;
+export function cacheKey(platform: string, username: string, plan?: string): string {
+  const base = `${platform}:${username.toLowerCase()}`;
+  return plan ? `${base}:${plan}` : base;
 }

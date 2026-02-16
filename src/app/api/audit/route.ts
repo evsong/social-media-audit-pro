@@ -46,14 +46,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid platform" }, { status: 400 });
   }
 
-  // Cache check — cached results don't count toward limits
-  const key = cacheKey(platform, username);
-  const cached = cacheGet<Record<string, unknown>>(key);
-  if (cached) {
-    return NextResponse.json({ ...cached, cached: true });
-  }
-
-  // User/anonymous rate limit
+  // Determine user plan first (needed for plan-aware caching)
   const session = await auth();
   let userId: string | null = null;
   let userPlan: Plan = "FREE";
@@ -63,13 +56,24 @@ export async function POST(req: NextRequest) {
     if (user) {
       userId = user.id;
       userPlan = user.plan;
-      const userCheck = await checkUserLimit(user.id, user.plan, prisma);
-      if (!userCheck.allowed) {
-        return NextResponse.json(
-          { error: userCheck.message, remaining: 0 },
-          { status: 429 }
-        );
-      }
+    }
+  }
+
+  // Cache check — cached results don't count toward limits
+  const key = cacheKey(platform, username, userPlan);
+  const cached = cacheGet<Record<string, unknown>>(key);
+  if (cached) {
+    return NextResponse.json({ ...cached, cached: true });
+  }
+
+  // User/anonymous rate limit
+  if (userId) {
+    const userCheck = await checkUserLimit(userId, userPlan, prisma);
+    if (!userCheck.allowed) {
+      return NextResponse.json(
+        { error: userCheck.message, remaining: 0 },
+        { status: 429 }
+      );
     }
   } else {
     const anonCheck = checkAnonymousLimit(ip);
