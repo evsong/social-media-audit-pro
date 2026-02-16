@@ -6,7 +6,8 @@ import { ProfileNotFoundError } from "@/lib/providers/types";
 import type { Platform } from "@/lib/providers/types";
 import { calculateScore } from "@/lib/scoring/calculator";
 import { generateTemplateSuggestions } from "@/lib/suggestions/templates";
-import { generateAISuggestions, generateAIScoring } from "@/lib/suggestions/ai";
+import { generateAIAnalysis } from "@/lib/suggestions/ai";
+import type { AIScoreResult } from "@/lib/suggestions/ai";
 import { cacheGet, cacheSet, cacheKey } from "@/lib/cache";
 import { isPremium } from "@/lib/plan-gate";
 import { analyzeBestTimes } from "@/lib/analysis/best-time";
@@ -98,21 +99,20 @@ export async function POST(req: NextRequest) {
 
     // Premium analysis (run in parallel if PRO+)
     let aiSuggestions: string[] | undefined;
-    let aiScoring: Awaited<ReturnType<typeof generateAIScoring>> | undefined;
+    let aiScoring: AIScoreResult | undefined;
     let bestTimes: ReturnType<typeof analyzeBestTimes> | undefined;
     let growthTrend: ReturnType<typeof analyzeGrowthTrend> | undefined;
     let fakeFollowers: ReturnType<typeof analyzeFakeFollowers> | undefined;
 
     if (isPremium(userPlan)) {
-      const [ai, aiScore, bt, gt, ff] = await Promise.all([
-        generateAISuggestions(platform, profile, scoreResult).catch(() => undefined),
-        generateAIScoring(platform, profile, posts, scoreResult).catch(() => undefined),
+      const [aiResult, bt, gt, ff] = await Promise.all([
+        generateAIAnalysis(platform, profile, posts, scoreResult).catch(() => ({ suggestions: [] as string[], scoring: undefined })),
         Promise.resolve(analyzeBestTimes(posts)),
         Promise.resolve(analyzeGrowthTrend(posts)),
         Promise.resolve(analyzeFakeFollowers(profile, posts)),
       ]);
-      aiSuggestions = ai;
-      aiScoring = aiScore;
+      aiSuggestions = aiResult.suggestions.length > 0 ? aiResult.suggestions : undefined;
+      aiScoring = aiResult.scoring;
       bestTimes = bt;
       growthTrend = gt;
       fakeFollowers = ff;

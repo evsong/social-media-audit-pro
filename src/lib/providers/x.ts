@@ -54,6 +54,20 @@ export class XProvider implements Provider {
     const restId = userData?.data?.user?.result?.rest_id;
     if (!restId) return [];
 
+    const totalPosts = userData?.data?.user?.result?.legacy?.statuses_count || 0;
+
+    let tweets = await this._parseTweets(restId, limit);
+
+    // Retry once if API returned 0 tweets but account has posts
+    if (tweets.length === 0 && totalPosts > 0) {
+      await new Promise((r) => setTimeout(r, 500));
+      tweets = await this._parseTweets(restId, limit);
+    }
+
+    return tweets;
+  }
+
+  private async _parseTweets(restId: string, limit: number): Promise<PostData[]> {
     const data = await rapidApiFetch("/user/tweets", {
       user_id: restId,
       limit: String(Math.min(limit, 20)),

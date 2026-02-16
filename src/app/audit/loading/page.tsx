@@ -2,12 +2,15 @@
 
 import { Suspense, useEffect, useState, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { ProgressSteps } from "@/components/audit/ProgressSteps";
 
 function AuditLoader() {
   const params = useSearchParams();
   const router = useRouter();
+  const { data: session } = useSession();
   const [error, setError] = useState("");
+  const [isPro, setIsPro] = useState(false);
   const called = useRef(false);
 
   const platform = params.get("platform");
@@ -28,11 +31,17 @@ function AuditLoader() {
           setError(data.error || "Audit failed");
           return;
         }
+        if (data.userPlan && data.userPlan !== "FREE") setIsPro(true);
         sessionStorage.setItem(`audit:${platform}:${username}`, JSON.stringify(data));
         router.replace(`/audit/${platform}/${data.profile?.username || username}`);
       })
       .catch(() => setError("Network error. Please try again."));
   }, [platform, username, router]);
+
+  // Detect PRO from session early so progress shows correct steps
+  useEffect(() => {
+    if (session?.user) setIsPro(true);
+  }, [session]);
 
   if (!platform || !username) {
     return (
@@ -46,9 +55,11 @@ function AuditLoader() {
     <main className="min-h-screen flex flex-col items-center justify-center gap-8 px-6">
       <div className="text-center mb-4">
         <h1 className="text-2xl font-bold mb-2">Auditing @{username}</h1>
-        <p className="text-sm text-gray-500">This usually takes a few seconds</p>
+        <p className="text-sm text-gray-500">
+          {isPro ? "Generating full report with AI analysis (~15s)" : "This usually takes ~6 seconds"}
+        </p>
       </div>
-      <ProgressSteps />
+      <ProgressSteps isPro={isPro} />
       {error && (
         <div className="text-center">
           <p className="text-red-400 text-sm mb-3">{error}</p>

@@ -76,7 +76,7 @@
 
 ## 11. Testing & Validation
 
-- [ ] 11.1 Test scoring engine with sample data for each platform
-- [ ] 11.2 Test provider error handling (invalid username, API failures)
-- [ ] 11.3 Test rate limiting and caching behavior
-- [ ] 11.4 End-to-end test: submit audit → loading → report page
+- [x] 11.1 Test scoring engine with sample data for each platform
+- [x] 11.2 Test provider error handling (invalid username, API failures)
+- [x] 11.3 Test rate limiting and caching behavior
+- [x] 11.4 End-to-end test: submit audit → loading → report page

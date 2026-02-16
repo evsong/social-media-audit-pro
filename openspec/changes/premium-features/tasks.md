@@ -52,8 +52,8 @@
 
 ## 9. Verification
 
-- [ ] 9.1 Set test user plan to PRO in DB, run audit — verify AI suggestions, best time, growth trend, fake follower data all appear unlocked
-- [ ] 9.2 Run audit as FREE user — verify all premium sections show lock overlay with upgrade CTA
-- [ ] 9.3 Test PDF download endpoint returns valid PDF with correct content
-- [ ] 9.4 Test competitor compare with 2 usernames on same platform
-- [ ] 9.5 Deploy to Vercel and verify end-to-end
+- [x] 9.1 Set test user plan to PRO in DB, run audit — verify AI suggestions, best time, growth trend, fake follower data all appear unlocked
+- [x] 9.2 Run audit as FREE user — verify all premium sections show lock overlay with upgrade CTA
+- [x] 9.3 Test PDF download endpoint returns valid PDF with correct content
+- [x] 9.4 Test competitor compare with 2 usernames on same platform
+- [x] 9.5 Deploy to Vercel and verify end-to-end
