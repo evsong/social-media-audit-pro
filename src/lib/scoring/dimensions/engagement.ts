@@ -67,5 +67,9 @@ export function scoreEngagement(
   }
 
   score = Math.round(Math.min(100, score));
-  return { score, grade: scoreToGrade(score), rate: Math.round(rate * 100) / 100 };
+  // Keep enough precision for ultra accounts (0.008% shouldn't round to 0%)
+  const roundedRate = rate < 0.1
+    ? Math.round(rate * 10000) / 10000
+    : Math.round(rate * 100) / 100;
+  return { score, grade: scoreToGrade(score), rate: roundedRate };
 }
