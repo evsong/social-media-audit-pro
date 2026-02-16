@@ -127,7 +127,14 @@ export async function POST(req: NextRequest) {
         healthScore: scoreResult.healthScore,
         grades: JSON.parse(JSON.stringify(scoreResult.grades)),
         suggestions: JSON.parse(JSON.stringify(suggestions)),
-        rawData: JSON.parse(JSON.stringify({ profile, posts })),
+        rawData: JSON.parse(JSON.stringify({
+          profile, posts,
+          ...(aiSuggestions && { aiSuggestions }),
+          ...(aiScoring && { aiScoring }),
+          ...(bestTimes && { bestTimes }),
+          ...(growthTrend && { growthTrend }),
+          ...(fakeFollowers && { fakeFollowers }),
+        })),
       },
     });
 
