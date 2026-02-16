@@ -1,4 +1,6 @@
 import type { PrismaClient } from ".prisma/client";
+import type { Plan } from ".prisma/client";
+import { getMonthlyAuditLimit } from "./plan-gate";
 
 const globalRateLimit = new Map<string, number[]>(); // IP -> timestamps
 const dailyAuditLimit = new Map<string, number>(); // IP -> count (resets daily)
@@ -58,8 +60,12 @@ export function incrementAnonymousCount(ip: string): void {
 
 export async function checkUserLimit(
   userId: string,
+  plan: Plan,
   prisma: PrismaClient
 ): Promise<RateLimitResult> {
+  const limit = getMonthlyAuditLimit(plan);
+  if (!isFinite(limit)) return { allowed: true };
+
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
@@ -67,9 +73,14 @@ export async function checkUserLimit(
     where: { userId, createdAt: { gte: startOfMonth } },
   });
 
-  if (count >= 5) {
-    return { allowed: false, message: "Monthly limit reached. Upgrade to Pro for more." };
+  if (count >= limit) {
+    return {
+      allowed: false,
+      message: plan === "FREE"
+        ? `Monthly limit reached (${limit}). Upgrade to Pro for more.`
+        : `Monthly limit reached (${limit}). Upgrade to Agency for unlimited.`,
+    };
   }
 
-  return { allowed: true, remaining: 5 - count };
+  return { allowed: true, remaining: limit - count };
 }

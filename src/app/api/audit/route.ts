@@ -6,7 +6,13 @@ import { ProfileNotFoundError } from "@/lib/providers/types";
 import type { Platform } from "@/lib/providers/types";
 import { calculateScore } from "@/lib/scoring/calculator";
 import { generateTemplateSuggestions } from "@/lib/suggestions/templates";
+import { generateAISuggestions } from "@/lib/suggestions/ai";
 import { cacheGet, cacheSet, cacheKey } from "@/lib/cache";
+import { isPremium } from "@/lib/plan-gate";
+import { analyzeBestTimes } from "@/lib/analysis/best-time";
+import { analyzeGrowthTrend } from "@/lib/analysis/growth-trend";
+import { analyzeFakeFollowers } from "@/lib/analysis/fake-followers";
+import type { Plan } from ".prisma/client";
 import {
   checkGlobalRateLimit,
   checkAnonymousLimit,
@@ -50,12 +56,14 @@ export async function POST(req: NextRequest) {
   // User/anonymous rate limit
   const session = await auth();
   let userId: string | null = null;
+  let userPlan: Plan = "FREE";
 
   if (session?.user?.email) {
     const user = await prisma.user.findUnique({ where: { email: session.user.email } });
     if (user) {
       userId = user.id;
-      const userCheck = await checkUserLimit(user.id, prisma);
+      userPlan = user.plan;
+      const userCheck = await checkUserLimit(user.id, user.plan, prisma);
       if (!userCheck.allowed) {
         return NextResponse.json(
           { error: userCheck.message, remaining: 0 },
@@ -84,6 +92,25 @@ export async function POST(req: NextRequest) {
     // Suggestions
     const suggestions = generateTemplateSuggestions(scoreResult.grades);
 
+    // Premium analysis (run in parallel if PRO+)
+    let aiSuggestions: string[] | undefined;
+    let bestTimes: ReturnType<typeof analyzeBestTimes> | undefined;
+    let growthTrend: ReturnType<typeof analyzeGrowthTrend> | undefined;
+    let fakeFollowers: ReturnType<typeof analyzeFakeFollowers> | undefined;
+
+    if (isPremium(userPlan)) {
+      const [ai, bt, gt, ff] = await Promise.all([
+        generateAISuggestions(platform, profile, scoreResult).catch(() => undefined),
+        Promise.resolve(analyzeBestTimes(posts)),
+        Promise.resolve(analyzeGrowthTrend(posts)),
+        Promise.resolve(analyzeFakeFollowers(profile, posts)),
+      ]);
+      aiSuggestions = ai;
+      bestTimes = bt;
+      growthTrend = gt;
+      fakeFollowers = ff;
+    }
+
     // Persist to DB
     const report = await prisma.auditReport.create({
       data: {
@@ -100,7 +127,7 @@ export async function POST(req: NextRequest) {
     // Increment rate limit counter
     if (!userId) incrementAnonymousCount(ip);
 
-    const response = {
+    const response: Record<string, unknown> = {
       platform,
       profile,
       healthScore: scoreResult.healthScore,
@@ -109,7 +136,13 @@ export async function POST(req: NextRequest) {
       suggestions,
       cached: false,
       auditId: report.id,
+      userPlan,
     };
+
+    if (aiSuggestions) response.aiSuggestions = aiSuggestions;
+    if (bestTimes) response.bestTimes = bestTimes;
+    if (growthTrend) response.growthTrend = growthTrend;
+    if (fakeFollowers) response.fakeFollowers = fakeFollowers;
 
     // Cache result
     cacheSet(key, response);

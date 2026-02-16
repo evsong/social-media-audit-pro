@@ -2,16 +2,25 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import type { Plan } from ".prisma/client";
 import { HealthScore } from "@/components/audit/HealthScore";
 import { AccountCard } from "@/components/audit/AccountCard";
 import { GradeBreakdown } from "@/components/audit/GradeBreakdown";
 import { SuggestionList } from "@/components/audit/SuggestionList";
 import { LockedSection } from "@/components/audit/LockedSection";
+import { AISuggestionList } from "@/components/audit/AISuggestionList";
+import { BestTimeGrid } from "@/components/audit/BestTimeGrid";
+import { GrowthTrend } from "@/components/audit/GrowthTrend";
+import { FakeFollowerCard } from "@/components/audit/FakeFollowerCard";
+import { DownloadButton } from "@/components/audit/DownloadButton";
 import { RemainingAudits } from "@/components/ui/RemainingAudits";
+import type { BestTimeResult } from "@/lib/analysis/best-time";
+import type { GrowthTrendResult } from "@/lib/analysis/growth-trend";
+import type { FakeFollowerResult } from "@/lib/analysis/fake-followers";
 
 interface AuditData {
   healthScore: number;
-  grade: string;
+  healthGrade: string;
   profile: {
     username: string;
     displayName: string;
@@ -26,6 +35,12 @@ interface AuditData {
   suggestions: string[];
   remaining: number;
   isAnonymous: boolean;
+  auditId?: string;
+  userPlan?: Plan;
+  aiSuggestions?: string[];
+  bestTimes?: BestTimeResult;
+  growthTrend?: GrowthTrendResult;
+  fakeFollowers?: FakeFollowerResult;
 }
 
 export default function AuditReportPage() {
@@ -76,6 +91,8 @@ export default function AuditReportPage() {
     );
   }
 
+  const plan = data.userPlan;
+
   return (
     <main className="min-h-screen pb-20">
       <nav className="sticky top-0 z-50 bg-[rgba(255,255,255,0.04)] backdrop-blur-xl border-b border-white/5">
@@ -86,13 +103,16 @@ export default function AuditReportPage() {
             </div>
             <span className="font-bold text-sm">AuditPro</span>
           </a>
-          <a href="/" className="text-sm text-gray-400 hover:text-white transition">New Audit</a>
+          <div className="flex items-center gap-4">
+            {data.auditId && <DownloadButton auditId={data.auditId} userPlan={plan} />}
+            <a href="/" className="text-sm text-gray-400 hover:text-white transition">New Audit</a>
+          </div>
         </div>
       </nav>
 
       <div className="max-w-5xl mx-auto px-6 pt-10 space-y-8">
         <div className="grid md:grid-cols-[auto_1fr] gap-8 items-start">
-          <HealthScore score={data.healthScore} grade={data.grade} />
+          <HealthScore score={data.healthScore} grade={data.healthGrade} />
           <AccountCard profile={data.profile} platform={params.platform} />
         </div>
 
@@ -105,16 +125,61 @@ export default function AuditReportPage() {
           <SuggestionList suggestions={data.suggestions} />
         )}
 
+        {/* AI Suggestions — PRO+ unlocked, FREE locked */}
+        {data.aiSuggestions ? (
+          <AISuggestionList suggestions={data.aiSuggestions} />
+        ) : (
+          <LockedSection
+            title="AI-Powered Suggestions"
+            description="Get personalized, AI-generated recommendations tailored to your account."
+            userPlan={plan}
+            feature="ai_suggestions"
+          />
+        )}
+
         <div className="grid md:grid-cols-2 gap-4">
           <LockedSection
             title="Growth Trend"
-            description="Track follower growth over the past 90 days with weekly breakdowns."
-          />
+            description="Track engagement trajectory and estimated monthly growth rate."
+            userPlan={plan}
+            feature="growth_trend"
+          >
+            {data.growthTrend && <GrowthTrend data={data.growthTrend} />}
+          </LockedSection>
+
           <LockedSection
             title="Best Time to Post"
             description="Discover when your audience is most active for maximum engagement."
-          />
+            userPlan={plan}
+            feature="best_time"
+          >
+            {data.bestTimes && <BestTimeGrid data={data.bestTimes} />}
+          </LockedSection>
         </div>
+
+        <LockedSection
+          title="Fake Follower Detection"
+          description="Estimate the percentage of authentic followers and identify risk factors."
+          userPlan={plan}
+          feature="fake_follower_detection"
+        >
+          {data.fakeFollowers && <FakeFollowerCard data={data.fakeFollowers} />}
+        </LockedSection>
+
+        {/* Competitor Compare link */}
+        <LockedSection
+          title="Competitor Compare"
+          description="Compare your account side-by-side with up to 2 competitors."
+          userPlan={plan}
+          feature="competitor_compare"
+        >
+          <a
+            href={`/compare/${params.platform}`}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#0d9488] hover:bg-[#0f766e] rounded-lg text-sm text-white font-medium transition"
+          >
+            Compare with competitors →
+          </a>
+        </LockedSection>
 
         <RemainingAudits remaining={data.remaining} isAnonymous={data.isAnonymous} />
       </div>

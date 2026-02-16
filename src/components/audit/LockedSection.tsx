@@ -1,4 +1,33 @@
-export function LockedSection({ title, description }: { title: string; description: string }) {
+"use client";
+
+import type { Plan } from ".prisma/client";
+import { canAccessFeature, type Feature } from "@/lib/plan-gate";
+import type { ReactNode } from "react";
+
+export function LockedSection({
+  title,
+  description,
+  userPlan,
+  feature,
+  children,
+}: {
+  title: string;
+  description: string;
+  userPlan?: Plan;
+  feature?: Feature;
+  children?: ReactNode;
+}) {
+  const unlocked = userPlan && feature ? canAccessFeature(userPlan, feature) : false;
+
+  if (unlocked && children) {
+    return (
+      <div className="bg-[rgba(255,255,255,0.04)] backdrop-blur border border-white/10 rounded-2xl p-6">
+        <h3 className="font-semibold text-lg mb-4">{title}</h3>
+        {children}
+      </div>
+    );
+  }
+
   return (
     <div className="relative bg-[rgba(255,255,255,0.04)] backdrop-blur border border-white/10 rounded-2xl p-6 overflow-hidden">
       <div className="absolute inset-0 backdrop-blur-sm bg-[rgba(0,0,0,0.3)] z-10 flex flex-col items-center justify-center gap-3">
