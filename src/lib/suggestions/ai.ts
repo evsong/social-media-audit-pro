@@ -9,6 +9,9 @@ export async function generateAISuggestions(
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return ["AI suggestions unavailable. Please configure ANTHROPIC_API_KEY."];
 
+  const baseUrl = (process.env.ANTHROPIC_BASE_URL || "https://api.anthropic.com").replace(/\/+$/, "");
+  const model = process.env.ANTHROPIC_MODEL || "claude-opus-4-6";
+
   const { grades } = scoreResult;
   const weakest = Object.entries(grades)
     .sort(([, a], [, b]) => a.score - b.score)
@@ -27,7 +30,7 @@ Weakest Areas: ${weakest.join(", ")}
 
 Provide 3-5 concise, actionable suggestions. Each should be 1-2 sentences. Focus on the weakest areas.`;
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+  const res = await fetch(`${baseUrl}/v1/messages`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -35,7 +38,7 @@ Provide 3-5 concise, actionable suggestions. Each should be 1-2 sentences. Focus
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
-      model: "claude-opus-4-6",
+      model,
       max_tokens: 500,
       messages: [{ role: "user", content: prompt }],
     }),
