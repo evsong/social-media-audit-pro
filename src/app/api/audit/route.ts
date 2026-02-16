@@ -6,7 +6,7 @@ import { ProfileNotFoundError } from "@/lib/providers/types";
 import type { Platform } from "@/lib/providers/types";
 import { calculateScore } from "@/lib/scoring/calculator";
 import { generateTemplateSuggestions } from "@/lib/suggestions/templates";
-import { generateAISuggestions } from "@/lib/suggestions/ai";
+import { generateAISuggestions, generateAIScoring } from "@/lib/suggestions/ai";
 import { cacheGet, cacheSet, cacheKey } from "@/lib/cache";
 import { isPremium } from "@/lib/plan-gate";
 import { analyzeBestTimes } from "@/lib/analysis/best-time";
@@ -98,18 +98,21 @@ export async function POST(req: NextRequest) {
 
     // Premium analysis (run in parallel if PRO+)
     let aiSuggestions: string[] | undefined;
+    let aiScoring: Awaited<ReturnType<typeof generateAIScoring>> | undefined;
     let bestTimes: ReturnType<typeof analyzeBestTimes> | undefined;
     let growthTrend: ReturnType<typeof analyzeGrowthTrend> | undefined;
     let fakeFollowers: ReturnType<typeof analyzeFakeFollowers> | undefined;
 
     if (isPremium(userPlan)) {
-      const [ai, bt, gt, ff] = await Promise.all([
+      const [ai, aiScore, bt, gt, ff] = await Promise.all([
         generateAISuggestions(platform, profile, scoreResult).catch(() => undefined),
+        generateAIScoring(platform, profile, posts, scoreResult).catch(() => undefined),
         Promise.resolve(analyzeBestTimes(posts)),
         Promise.resolve(analyzeGrowthTrend(posts)),
         Promise.resolve(analyzeFakeFollowers(profile, posts)),
       ]);
       aiSuggestions = ai;
+      aiScoring = aiScore;
       bestTimes = bt;
       growthTrend = gt;
       fakeFollowers = ff;
@@ -144,6 +147,7 @@ export async function POST(req: NextRequest) {
     };
 
     if (aiSuggestions) response.aiSuggestions = aiSuggestions;
+    if (aiScoring) response.aiScoring = aiScoring;
     if (bestTimes) response.bestTimes = bestTimes;
     if (growthTrend) response.growthTrend = growthTrend;
     if (fakeFollowers) response.fakeFollowers = fakeFollowers;

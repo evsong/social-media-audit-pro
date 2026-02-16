@@ -9,11 +9,13 @@ import { GradeBreakdown } from "@/components/audit/GradeBreakdown";
 import { SuggestionList } from "@/components/audit/SuggestionList";
 import { LockedSection } from "@/components/audit/LockedSection";
 import { AISuggestionList } from "@/components/audit/AISuggestionList";
+import { AIScoreCard } from "@/components/audit/AIScoreCard";
 import { BestTimeGrid } from "@/components/audit/BestTimeGrid";
 import { GrowthTrend } from "@/components/audit/GrowthTrend";
 import { FakeFollowerCard } from "@/components/audit/FakeFollowerCard";
 import { DownloadButton } from "@/components/audit/DownloadButton";
 import { RemainingAudits } from "@/components/ui/RemainingAudits";
+import type { AIScoreResult } from "@/lib/suggestions/ai";
 import type { BestTimeResult } from "@/lib/analysis/best-time";
 import type { GrowthTrendResult } from "@/lib/analysis/growth-trend";
 import type { FakeFollowerResult } from "@/lib/analysis/fake-followers";
@@ -38,6 +40,7 @@ interface AuditData {
   auditId?: string;
   userPlan?: Plan;
   aiSuggestions?: string[];
+  aiScoring?: AIScoreResult;
   bestTimes?: BestTimeResult;
   growthTrend?: GrowthTrendResult;
   fakeFollowers?: FakeFollowerResult;
@@ -132,6 +135,18 @@ export default function AuditReportPage() {
           <LockedSection
             title="AI-Powered Suggestions"
             description="Get personalized, AI-generated recommendations tailored to your account."
+            userPlan={plan}
+            feature="ai_suggestions"
+          />
+        )}
+
+        {/* AI Content Analysis — PRO+ unlocked, FREE locked */}
+        {data.aiScoring ? (
+          <AIScoreCard data={data.aiScoring} />
+        ) : (
+          <LockedSection
+            title="AI Content Analysis"
+            description="Get AI-powered content quality, brand consistency, and audience alignment ratings."
             userPlan={plan}
             feature="ai_suggestions"
           />
