@@ -13,8 +13,8 @@ const ACCESS: Record<Feature, Plan[]> = {
   best_time: ["PRO", "AGENCY"],
   growth_trend: ["PRO", "AGENCY"],
   pdf_export: ["PRO", "AGENCY"],
-  competitor_compare: ["PRO", "AGENCY"],
-  fake_follower_detection: ["PRO", "AGENCY"],
+  competitor_compare: ["AGENCY"],
+  fake_follower_detection: ["AGENCY"],
 };
 
 export function canAccessFeature(plan: Plan, feature: Feature): boolean {
@@ -26,8 +26,8 @@ export function isPremium(plan: Plan): boolean {
 }
 
 const MONTHLY_LIMITS: Record<Plan, number> = {
-  FREE: 5,
-  PRO: 50,
+  FREE: 3,
+  PRO: 30,
   AGENCY: Infinity,
 };
 

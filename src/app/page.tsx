@@ -68,9 +68,9 @@ export default function Home() {
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="font-bold text-3xl mb-14">Simple, transparent pricing</h2>
           <div className="grid md:grid-cols-3 gap-5">
-            <PriceCard title="Free" price="$0" period="forever" features={["1 audit per month","Health score + grades","Basic engagement data"]} />
-            <PriceCard title="Pro" price="$29.99" period="per month" popular features={["5 accounts","Growth trends","Best time to post","Hashtag analysis","PDF export"]} />
-            <PriceCard title="Agency" price="$99" period="per month" features={["50 accounts","Competitor compare","Fake follower detection","White-label reports","Scheduled monitoring"]} />
+            <PriceCard title="Free" price="$0" period="forever" features={["3 audits per month","Health score + grades","Basic engagement data","Template suggestions"]} />
+            <PriceCard title="Pro" price="$5.99" period="per month" popular features={["30 audits per month","AI deep suggestions","Growth trends","Best time to post","PDF export"]} />
+            <PriceCard title="Agency" price="$99" period="per month" features={["Unlimited audits","Everything in Pro","Competitor compare","Fake follower detection","White-label reports"]} />
           </div>
         </div>
       </section>

@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
     // Suggestions
     const suggestions = generateTemplateSuggestions(scoreResult.grades);
 
-    // Premium analysis (run in parallel if PRO+)
+    // Premium analysis
     let aiSuggestions: string[] | undefined;
     let aiScoring: AIScoreResult | undefined;
     let bestTimes: ReturnType<typeof analyzeBestTimes> | undefined;
@@ -105,17 +105,21 @@ export async function POST(req: NextRequest) {
     let fakeFollowers: ReturnType<typeof analyzeFakeFollowers> | undefined;
 
     if (isPremium(userPlan)) {
-      const [aiResult, bt, gt, ff] = await Promise.all([
+      // PRO+ features: AI, best times, growth trend
+      const [aiResult, bt, gt] = await Promise.all([
         generateAIAnalysis(platform, profile, posts, scoreResult).catch(() => ({ suggestions: [] as string[], scoring: undefined })),
         Promise.resolve(analyzeBestTimes(posts)),
         Promise.resolve(analyzeGrowthTrend(posts)),
-        Promise.resolve(analyzeFakeFollowers(profile, posts)),
       ]);
       aiSuggestions = aiResult.suggestions.length > 0 ? aiResult.suggestions : undefined;
       aiScoring = aiResult.scoring;
       bestTimes = bt;
       growthTrend = gt;
-      fakeFollowers = ff;
+
+      // AGENCY-only: fake follower detection
+      if (userPlan === "AGENCY") {
+        fakeFollowers = analyzeFakeFollowers(profile, posts);
+      }
     }
 
     // Persist to DB

@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 
   const user = await prisma.user.findUnique({ where: { email: session.user.email } });
   if (!user || !canAccessFeature(user.plan, "competitor_compare")) {
-    return NextResponse.json({ error: "Upgrade to Pro to use competitor compare" }, { status: 403 });
+    return NextResponse.json({ error: "Upgrade to Agency to use competitor compare" }, { status: 403 });
   }
 
   const body = await req.json().catch(() => null);

@@ -36,9 +36,15 @@ export function LockedSection({
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
           </svg>
         </div>
-        <p className="text-sm text-gray-300 font-medium">Upgrade to Pro to unlock</p>
-        <a href="#pricing" className="px-4 py-2 bg-[#0d9488] hover:bg-[#0f766e] rounded-lg text-white text-xs font-semibold transition">
-          Upgrade Now
+        <p className="text-sm text-gray-300 font-medium">
+          {feature && (feature === "competitor_compare" || feature === "fake_follower_detection")
+            ? "Upgrade to Agency to unlock"
+            : "Upgrade to Pro to unlock"}
+        </p>
+        <a href="/#pricing" className="px-4 py-2 bg-[#0d9488] hover:bg-[#0f766e] rounded-lg text-white text-xs font-semibold transition">
+          {feature && (feature === "competitor_compare" || feature === "fake_follower_detection")
+            ? "View Agency Plan"
+            : "Upgrade — $5.99/mo"}
         </a>
       </div>
       <h3 className="font-semibold text-lg mb-2">{title}</h3>
