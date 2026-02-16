@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { Suspense, useEffect, useState, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ProgressSteps } from "@/components/audit/ProgressSteps";
 
-export default function AuditLoadingPage() {
+function AuditLoader() {
   const params = useSearchParams();
   const router = useRouter();
   const [error, setError] = useState("");
@@ -56,5 +56,17 @@ export default function AuditLoadingPage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function AuditLoadingPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse text-gray-500">Loading...</div>
+      </main>
+    }>
+      <AuditLoader />
+    </Suspense>
   );
 }

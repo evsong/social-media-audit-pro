@@ -7,7 +7,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   providers: [
     EmailProvider({
-      server: process.env.EMAIL_SERVER,
+      server: process.env.EMAIL_SERVER || "smtp://localhost:1025",
       from: process.env.EMAIL_FROM || "noreply@auditpro.com",
     }),
   ],

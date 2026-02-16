@@ -4,7 +4,7 @@
   "description": "Social media audit tool - health score, engagement analysis, AI suggestions",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -19,6 +19,8 @@
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
+    "@neondatabase/serverless": "^1.0.2",
+    "@prisma/adapter-neon": "^7.4.0",
     "@prisma/client": "^7.4.0",
     "next": "^16.1.6",
     "next-auth": "5.0.0-beta.30",
