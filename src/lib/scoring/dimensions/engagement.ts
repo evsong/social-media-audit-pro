@@ -41,7 +41,10 @@ export function scoreEngagement(
     return { score: 0, grade: "D", rate: 0 };
   }
 
-  const totalEngagement = posts.reduce((sum, p) => sum + p.likes + p.comments, 0);
+  const totalEngagement = posts.reduce(
+    (sum, p) => sum + p.likes + p.comments + (p.shares || 0) + (p.retweets || 0),
+    0
+  );
   const avgEngagement = totalEngagement / posts.length;
   const rate = (avgEngagement / profile.followers) * 100;
 
