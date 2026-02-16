@@ -1,17 +1,20 @@
 import type { Provider, ProfileData, PostData } from "./types";
 import { ProfileNotFoundError, ProviderError } from "./types";
 
-const RAPIDAPI_HOST = "instagram-scraper-api2.p.rapidapi.com";
+const RAPIDAPI_HOST = "instagram120.p.rapidapi.com";
 
-async function rapidApiFetch(path: string) {
+async function rapidApiPost(path: string, body: Record<string, string>) {
   const key = process.env.RAPIDAPI_KEY;
   if (!key) throw new ProviderError("instagram", "RAPIDAPI_KEY not configured");
 
   const res = await fetch(`https://${RAPIDAPI_HOST}${path}`, {
+    method: "POST",
     headers: {
+      "Content-Type": "application/json",
       "x-rapidapi-key": key,
       "x-rapidapi-host": RAPIDAPI_HOST,
     },
+    body: JSON.stringify(body),
   });
 
   if (res.status === 404) return null;
@@ -23,45 +26,48 @@ async function rapidApiFetch(path: string) {
 
 export class InstagramProvider implements Provider {
   async fetchProfile(username: string): Promise<ProfileData> {
-    const data = await rapidApiFetch(`/v1/info?username_or_id_or_url=${encodeURIComponent(username)}`);
-    if (!data?.data) throw new ProfileNotFoundError("instagram", username);
+    const data = await rapidApiPost("/api/instagram/userInfo", { username });
+    const user = data?.result?.[0]?.user;
+    if (!user) throw new ProfileNotFoundError("instagram", username);
 
-    const d = data.data;
     return {
-      username: d.username || username,
-      displayName: d.full_name || "",
-      avatar: d.profile_pic_url_hd || d.profile_pic_url || "",
-      bio: d.biography || "",
-      followers: d.follower_count || 0,
-      following: d.following_count || 0,
-      posts: d.media_count || 0,
-      isVerified: d.is_verified || false,
-      externalUrl: d.external_url || undefined,
-      highlights: (d.highlight_reel_count || 0) > 0,
+      username: user.uniqueId || user.username || username,
+      displayName: user.full_name || "",
+      avatar: user.hd_profile_pic_url_info?.url || user.profile_pic_url || "",
+      bio: user.biography || user.signature || "",
+      followers: user.follower_count || 0,
+      following: user.following_count || 0,
+      posts: user.media_count || 0,
+      isVerified: user.is_verified || false,
+      externalUrl: user.external_url || undefined,
+      highlights: user.has_highlight_reels || false,
     };
   }
 
   async fetchPosts(username: string, limit: number): Promise<PostData[]> {
-    const data = await rapidApiFetch(`/v1.2/posts?username_or_id_or_url=${encodeURIComponent(username)}`);
-    if (!data?.data?.items) return [];
+    const data = await rapidApiPost("/api/instagram/posts", { username });
+    const edges = data?.result?.edges;
+    if (!edges) return [];
 
-    const items = data.data.items.slice(0, limit);
-    return items.map((item: Record<string, unknown>) => {
-      const caption = (item.caption as Record<string, unknown>)?.text as string || "";
+    return edges.slice(0, limit).map((edge: Record<string, unknown>) => {
+      const node = edge.node as Record<string, unknown>;
+      const caption = (node.caption as Record<string, unknown>)?.text as string || "";
       const hashtagMatches = caption.match(/#[\w\u00C0-\u024F]+/g) || [];
 
       let type = "image";
-      if (item.media_type === 2 || item.video_url) type = "video";
-      if (item.product_type === "clips") type = "reel";
-      if (item.carousel_media) type = "carousel";
+      const mediaType = node.media_type as number;
+      const productType = node.product_type as string;
+      if (mediaType === 2 || node.video_versions) type = "video";
+      if (productType === "clips") type = "reel";
+      if (mediaType === 8 || node.carousel_media) type = "carousel";
 
       return {
-        id: String(item.pk || item.id || ""),
+        id: String(node.pk || node.id || ""),
         type,
-        likes: (item.like_count as number) || 0,
-        comments: (item.comment_count as number) || 0,
-        timestamp: item.taken_at
-          ? new Date((item.taken_at as number) * 1000).toISOString()
+        likes: (node.like_count as number) || 0,
+        comments: (node.comment_count as number) || 0,
+        timestamp: node.taken_at
+          ? new Date((node.taken_at as number) * 1000).toISOString()
           : new Date().toISOString(),
         caption,
         hashtags: hashtagMatches.map((h: string) => h.slice(1)),

@@ -1,19 +1,23 @@
 import type { Provider, ProfileData, PostData } from "./types";
 import { ProfileNotFoundError, ProviderError } from "./types";
 
-const BASE_URL = "https://api.x.com/2";
+const RAPIDAPI_HOST = "twitter-x.p.rapidapi.com";
 
-async function xApiFetch(path: string, params?: Record<string, string>) {
-  const token = process.env.X_BEARER_TOKEN;
-  if (!token) throw new ProviderError("x", "X_BEARER_TOKEN not configured");
+async function rapidApiFetch(path: string, params?: Record<string, string>) {
+  const key = process.env.RAPIDAPI_KEY;
+  if (!key) throw new ProviderError("x", "RAPIDAPI_KEY not configured");
 
-  const url = new URL(`${BASE_URL}${path}`);
+  const url = new URL(`https://${RAPIDAPI_HOST}${path}`);
   if (params) {
     for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
   }
 
   const res = await fetch(url.toString(), {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: {
+      "Content-Type": "application/json",
+      "x-rapidapi-key": key,
+      "x-rapidapi-host": RAPIDAPI_HOST,
+    },
   });
 
   if (res.status === 404) return null;
@@ -25,79 +29,81 @@ async function xApiFetch(path: string, params?: Record<string, string>) {
 
 export class XProvider implements Provider {
   async fetchProfile(username: string): Promise<ProfileData> {
-    const data = await xApiFetch(`/users/by/username/${encodeURIComponent(username)}`, {
-      "user.fields": "description,profile_image_url,public_metrics,verified,url,pinned_tweet_id",
-    });
+    const data = await rapidApiFetch("/user/details", { username });
+    const user = data?.data?.user?.result;
+    if (!user) throw new ProfileNotFoundError("x", username);
 
-    if (!data?.data) throw new ProfileNotFoundError("x", username);
-
-    const user = data.data;
-    const metrics = user.public_metrics || {};
+    const legacy = user.legacy || {};
     return {
-      username: user.username || username,
-      displayName: user.name || "",
-      avatar: user.profile_image_url?.replace("_normal", "_400x400") || "",
-      bio: user.description || "",
-      followers: metrics.followers_count || 0,
-      following: metrics.following_count || 0,
-      posts: metrics.tweet_count || 0,
-      isVerified: user.verified || false,
-      externalUrl: user.url || undefined,
-      pinnedTweet: user.pinned_tweet_id || undefined,
+      username: legacy.screen_name || username,
+      displayName: legacy.name || "",
+      avatar: legacy.profile_image_url_https?.replace("_normal", "_400x400") || "",
+      bio: legacy.description || "",
+      followers: legacy.followers_count || 0,
+      following: legacy.friends_count || 0,
+      posts: legacy.statuses_count || 0,
+      isVerified: user.is_blue_verified || false,
+      externalUrl: legacy.url || undefined,
+      pinnedTweet: legacy.pinned_tweet_ids_str?.[0] || undefined,
     };
   }
 
   async fetchPosts(username: string, limit: number): Promise<PostData[]> {
-    // First get user ID
-    const userData = await xApiFetch(`/users/by/username/${encodeURIComponent(username)}`);
-    if (!userData?.data?.id) return [];
+    // First get rest_id from user details
+    const userData = await rapidApiFetch("/user/details", { username });
+    const restId = userData?.data?.user?.result?.rest_id;
+    if (!restId) return [];
 
-    const userId = userData.data.id;
-    const data = await xApiFetch(`/users/${userId}/tweets`, {
-      max_results: String(Math.min(limit, 100)),
-      "tweet.fields": "public_metrics,created_at,entities,attachments",
-      "media.fields": "type",
-      expansions: "attachments.media_keys",
+    const data = await rapidApiFetch("/user/tweets", {
+      user_id: restId,
+      limit: String(Math.min(limit, 20)),
     });
 
-    if (!data?.data) return [];
+    const instructions = data?.data?.user?.result?.timeline?.timeline?.instructions || [];
+    const tweets: PostData[] = [];
 
-    const mediaMap = new Map<string, string>();
-    if (data.includes?.media) {
-      for (const m of data.includes.media) {
-        mediaMap.set(m.media_key, m.type);
+    for (const inst of instructions) {
+      const entries = inst.entries || (inst.entry ? [inst.entry] : []);
+      for (const entry of entries) {
+        if (tweets.length >= limit) break;
+        const tweetResult = entry?.content?.itemContent?.tweet_results?.result;
+        const legacy = tweetResult?.legacy;
+        if (!legacy?.full_text) continue;
+
+        // Skip retweets for scoring accuracy
+        if (legacy.full_text.startsWith("RT @")) continue;
+
+        const text = legacy.full_text as string;
+        const hashtags = (legacy.entities?.hashtags || []).map((h: { text: string }) => h.text);
+        const media = legacy.entities?.media || [];
+
+        let type = "text";
+        if (media.length > 0) {
+          const mediaType = media[0].type;
+          if (mediaType === "video" || mediaType === "animated_gif") type = "video";
+          else if (mediaType === "photo") type = "image";
+        }
+        if (text.includes("🧵") || text.startsWith("1/")) type = "thread";
+
+        tweets.push({
+          id: legacy.id_str || String(tweetResult.rest_id || ""),
+          type,
+          likes: legacy.favorite_count || 0,
+          comments: legacy.reply_count || 0,
+          replies: legacy.reply_count || 0,
+          retweets: legacy.retweet_count || 0,
+          quotes: legacy.quote_count || 0,
+          bookmarks: legacy.bookmark_count || 0,
+          impressions: Number(tweetResult.views?.count) || 0,
+          timestamp: legacy.created_at
+            ? new Date(legacy.created_at).toISOString()
+            : new Date().toISOString(),
+          caption: text,
+          hashtags,
+        });
       }
     }
 
-    return data.data.slice(0, limit).map((tweet: Record<string, unknown>) => {
-      const text = (tweet.text as string) || "";
-      const entities = tweet.entities as Record<string, unknown[]> | undefined;
-      const hashtags = (entities?.hashtags as Array<{ tag: string }>) || [];
-      const metrics = (tweet.public_metrics as Record<string, number>) || {};
-
-      const mediaKeys = ((tweet.attachments as Record<string, string[]>)?.media_keys) || [];
-      let type = "text";
-      for (const key of mediaKeys) {
-        const mediaType = mediaMap.get(key);
-        if (mediaType === "video" || mediaType === "animated_gif") { type = "video"; break; }
-        if (mediaType === "photo") type = "image";
-      }
-      if (text.includes("🧵") || text.startsWith("1/")) type = "thread";
-
-      return {
-        id: String(tweet.id || ""),
-        type,
-        likes: metrics.like_count || 0,
-        comments: metrics.reply_count || 0,
-        replies: metrics.reply_count || 0,
-        retweets: metrics.retweet_count || 0,
-        quotes: metrics.quote_count || 0,
-        bookmarks: metrics.bookmark_count || 0,
-        impressions: metrics.impression_count || 0,
-        timestamp: (tweet.created_at as string) || new Date().toISOString(),
-        caption: text,
-        hashtags: hashtags.map((h) => h.tag),
-      };
-    });
+    return tweets.slice(0, limit);
   }
 }
