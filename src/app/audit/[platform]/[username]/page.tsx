@@ -53,14 +53,31 @@ export default function AuditReportPage() {
 
   useEffect(() => {
     const key = `audit:${params.platform}:${params.username}`;
+    const idKey = `auditId:${params.platform}:${params.username}`;
     const cached = sessionStorage.getItem(key);
     if (cached) {
-      setData(JSON.parse(cached));
+      const parsed = JSON.parse(cached);
+      setData(parsed);
       sessionStorage.removeItem(key);
+      // Persist auditId for refresh
+      if (parsed.auditId) sessionStorage.setItem(idKey, parsed.auditId);
       return;
     }
 
-    // Fallback: call API directly (e.g. shared link or page refresh)
+    // Refresh: fetch existing report by ID (no re-audit)
+    const savedId = sessionStorage.getItem(idKey);
+    if (savedId) {
+      fetch(`/api/audit/${savedId}`)
+        .then(async (res) => {
+          const json = await res.json();
+          if (!res.ok) { setError(json.error || "Report not found"); return; }
+          setData(json);
+        })
+        .catch(() => setError("Network error"));
+      return;
+    }
+
+    // Fallback: shared link or direct visit — run audit
     fetch("/api/audit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -68,11 +85,9 @@ export default function AuditReportPage() {
     })
       .then(async (res) => {
         const json = await res.json();
-        if (!res.ok) {
-          setError(json.error || "Failed to load audit");
-          return;
-        }
+        if (!res.ok) { setError(json.error || "Failed to load audit"); return; }
         setData(json);
+        if (json.auditId) sessionStorage.setItem(idKey, json.auditId);
       })
       .catch(() => setError("Network error"));
   }, [params.platform, params.username]);
