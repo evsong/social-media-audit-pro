@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { signIn } from "next-auth/react";
 
 export default function SignInPage() {
   const [email, setEmail] = useState("");
@@ -15,13 +16,12 @@ export default function SignInPage() {
     setError("");
 
     try {
-      const res = await fetch("/api/auth/signin/email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim() }),
+      const res = await signIn("resend", {
+        email: email.trim(),
+        redirect: false,
       });
 
-      if (res.ok) {
+      if (res?.ok) {
         window.location.href = "/auth/verify";
       } else {
         setError("Failed to send login link. Try again.");
