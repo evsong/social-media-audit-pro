@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String        @id @default(cuid())
+  email     String        @unique
+  name      String?
+  plan      Plan          @default(FREE)
+  audits    AuditReport[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+enum Plan {
+  FREE
+  PRO
+  AGENCY
+}
+
+model AuditReport {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  platform    String
+  username    String
+  healthScore Int
+  grades      Json
+  suggestions Json
+  rawData     Json
+  createdAt   DateTime @default(now())
+
+  @@index([platform, username])
+  @@index([userId])
+  @@index([createdAt])
+}
