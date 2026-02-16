@@ -15,7 +15,7 @@ export default function Home() {
           <div className="hidden md:flex items-center gap-8 text-sm text-gray-400">
             <a href="#features" className="hover:text-white transition">Features</a>
             <a href="#pricing" className="hover:text-white transition">Pricing</a>
-            <a href="/audit/demo" className="px-4 py-2 bg-[#0d9488] hover:bg-[#0f766e] rounded-lg text-white text-sm font-medium transition">Try Demo</a>
+            <a href="/auth/signin" className="px-4 py-2 bg-[#0d9488] hover:bg-[#0f766e] rounded-lg text-white text-sm font-medium transition">Sign In</a>
           </div>
         </div>
       </nav>
