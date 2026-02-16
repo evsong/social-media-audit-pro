@@ -8,6 +8,7 @@ import { AccountCard } from "@/components/audit/AccountCard";
 import { GradeBreakdown } from "@/components/audit/GradeBreakdown";
 import { SuggestionList } from "@/components/audit/SuggestionList";
 import { LockedSection } from "@/components/audit/LockedSection";
+import { canAccessFeature } from "@/lib/plan-gate";
 import { AISuggestionList } from "@/components/audit/AISuggestionList";
 import { AIScoreCard } from "@/components/audit/AIScoreCard";
 import { BestTimeGrid } from "@/components/audit/BestTimeGrid";
@@ -144,24 +145,28 @@ export default function AuditReportPage() {
         )}
 
         {/* AI Suggestions — PRO+ unlocked, FREE locked */}
-        <LockedSection
-          title="AI-Powered Suggestions"
-          description="Get personalized, AI-generated recommendations tailored to your account."
-          userPlan={plan}
-          feature="ai_suggestions"
-        >
-          {data.aiSuggestions && <AISuggestionList suggestions={data.aiSuggestions} />}
-        </LockedSection>
+        {plan && canAccessFeature(plan, "ai_suggestions") && data.aiSuggestions ? (
+          <AISuggestionList suggestions={data.aiSuggestions} />
+        ) : (
+          <LockedSection
+            title="AI-Powered Suggestions"
+            description="Get personalized, AI-generated recommendations tailored to your account."
+            userPlan={plan}
+            feature="ai_suggestions"
+          />
+        )}
 
         {/* AI Content Analysis — PRO+ unlocked, FREE locked */}
-        <LockedSection
-          title="AI Content Analysis"
-          description="Get AI-powered content quality, brand consistency, and audience alignment ratings."
-          userPlan={plan}
-          feature="ai_suggestions"
-        >
-          {data.aiScoring && <AIScoreCard data={data.aiScoring} />}
-        </LockedSection>
+        {plan && canAccessFeature(plan, "ai_suggestions") && data.aiScoring ? (
+          <AIScoreCard data={data.aiScoring} />
+        ) : (
+          <LockedSection
+            title="AI Content Analysis"
+            description="Get AI-powered content quality, brand consistency, and audience alignment ratings."
+            userPlan={plan}
+            feature="ai_suggestions"
+          />
+        )}
 
         <div className="grid md:grid-cols-2 gap-4">
           <LockedSection
