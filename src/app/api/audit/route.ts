@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   }
 
   const platform = body.platform as Platform;
-  const username = body.username.replace(/^@/, "").trim().toLowerCase();
+  const username = body.username.replace(/^@/, "").trim();
 
   if (!VALID_PLATFORMS.includes(platform)) {
     return NextResponse.json({ error: "Invalid platform" }, { status: 400 });
