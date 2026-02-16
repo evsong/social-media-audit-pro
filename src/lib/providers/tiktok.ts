@@ -46,16 +46,14 @@ export class TikTokProvider implements Provider {
     // Posts API requires secUid — fetch it from user info first
     const userInfo = await rapidApiFetch(`/api/user/info?uniqueId=${encodeURIComponent(username)}`);
     const secUid = userInfo?.userInfo?.user?.secUid;
-    console.log("[TikTok] secUid for", username, ":", secUid ? secUid.slice(0, 30) + "..." : "MISSING");
     if (!secUid) return [];
 
-    const postsUrl = `/api/user/posts?secUid=${encodeURIComponent(secUid)}&count=${limit}`;
-    console.log("[TikTok] fetching posts:", postsUrl.slice(0, 80));
-    const data = await rapidApiFetch(postsUrl);
-    console.log("[TikTok] posts response keys:", data ? Object.keys(data) : "null", "itemList length:", data?.itemList?.length ?? "N/A");
-    if (!data?.itemList) return [];
+    const data = await rapidApiFetch(`/api/user/posts?secUid=${encodeURIComponent(secUid)}&count=${limit}`);
+    // Posts endpoint with secUid wraps response under data.itemList
+    const items = data?.itemList || data?.data?.itemList;
+    if (!items) return [];
 
-    return data.itemList.slice(0, limit).map((item: Record<string, unknown>) => {
+    return items.slice(0, limit).map((item: Record<string, unknown>) => {
       const desc = (item.desc as string) || "";
       const hashtagMatches = desc.match(/#[\w\u00C0-\u024F]+/g) || [];
       const stats = (item.stats as Record<string, number>) || {};
