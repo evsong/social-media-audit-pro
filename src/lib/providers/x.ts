@@ -19,8 +19,6 @@ async function tweetApiFetch(path: string, params?: Record<string, string>) {
 
   if (res.status === 404) return null;
   if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    console.error(`[TweetAPI] ${res.status} ${res.statusText} — ${path}`, body.slice(0, 200));
     throw new ProviderError("x", `TweetAPI error ${res.status}: ${res.statusText}`);
   }
   return res.json();
@@ -55,7 +53,6 @@ export class XProvider implements Provider {
     // Step 2: fetch tweets
     const data = await tweetApiFetch("/user/tweets", { userId });
     const tweets = data?.data;
-    console.log(`[TweetAPI] /user/tweets userId=${userId} → ${Array.isArray(tweets) ? tweets.length : "not-array"} tweets, keys=${data ? Object.keys(data).join(",") : "null"}`);
     if (!Array.isArray(tweets)) return [];
 
     const posts: PostData[] = [];
