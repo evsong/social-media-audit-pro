@@ -11,6 +11,6 @@ export function getProvider(platform: Platform): Provider {
     case "tiktok":
       return process.env.RAPIDAPI_KEY ? new TikTokProvider() : new MockProvider(platform);
     case "x":
-      return process.env.RAPIDAPI_KEY ? new XProvider() : new MockProvider(platform);
+      return process.env.TWEETAPI_KEY ? new XProvider() : new MockProvider(platform);
   }
 }
