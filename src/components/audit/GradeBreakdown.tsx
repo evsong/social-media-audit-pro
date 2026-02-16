@@ -49,7 +49,12 @@ export function GradeBreakdown({ grades }: { grades: Record<string, { score: num
       const passed = Object.values(checks).filter(Boolean).length;
       return `${passed}/${Object.keys(checks).length} checks passed`;
     }},
-    followerQuality: { label: "Follower Quality", detailFn: (g) => `${g.ratio} follower ratio` },
+    followerQuality: { label: "Follower Quality", detailFn: (g) => {
+      const r = g.ratio as number;
+      if (r >= 1_000_000) return `${(r / 1_000_000).toFixed(1)}M:1 ratio`;
+      if (r >= 1_000) return `${(r / 1_000).toFixed(1)}K:1 ratio`;
+      return `${r}:1 ratio`;
+    }},
     hashtags: { label: "Hashtag Usage", detailFn: (g) => `${g.avgPerPost} avg/post` },
   };
 

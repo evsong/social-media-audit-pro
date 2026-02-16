@@ -13,15 +13,29 @@ export function analyzeFakeFollowers(
   const riskFactors: string[] = [];
   let suspicionScore = 0; // 0-100, higher = more fake
 
-  // 1. Engagement-to-follower ratio
+  // 1. Engagement-to-follower ratio (tier-aware)
   if (profile.followers > 0 && posts.length > 0) {
     const avgLikes = posts.reduce((s, p) => s + p.likes, 0) / posts.length;
     const engagementRate = (avgLikes / profile.followers) * 100;
 
-    if (engagementRate < 0.5 && profile.followers > 10000) {
+    // Thresholds scale with account size — mega/ultra accounts naturally have lower rates
+    let lowThreshold = 0.5;
+    let veryLowThreshold = 0.1;
+    if (profile.followers >= 10_000_000) {
+      lowThreshold = 0.02;
+      veryLowThreshold = 0.005;
+    } else if (profile.followers >= 1_000_000) {
+      lowThreshold = 0.08;
+      veryLowThreshold = 0.02;
+    } else if (profile.followers >= 100_000) {
+      lowThreshold = 0.2;
+      veryLowThreshold = 0.05;
+    }
+
+    if (engagementRate < veryLowThreshold && profile.followers > 10000) {
       suspicionScore += 30;
       riskFactors.push("Very low engagement rate relative to follower count");
-    } else if (engagementRate < 1 && profile.followers > 5000) {
+    } else if (engagementRate < lowThreshold && profile.followers > 5000) {
       suspicionScore += 15;
       riskFactors.push("Below-average engagement rate for account size");
     }
@@ -35,7 +49,7 @@ export function analyzeFakeFollowers(
       riskFactors.push("Following far more accounts than followers — possible follow-back scheme");
     }
   }
-  if (profile.followers > 100000 && profile.following > 5000) {
+  if (profile.followers > 100000 && profile.following > 5000 && profile.followers / profile.following < 100) {
     suspicionScore += 10;
     riskFactors.push("High following count unusual for large accounts");
   }

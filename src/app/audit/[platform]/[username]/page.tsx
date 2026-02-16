@@ -144,28 +144,24 @@ export default function AuditReportPage() {
         )}
 
         {/* AI Suggestions — PRO+ unlocked, FREE locked */}
-        {data.aiSuggestions ? (
-          <AISuggestionList suggestions={data.aiSuggestions} />
-        ) : (
-          <LockedSection
-            title="AI-Powered Suggestions"
-            description="Get personalized, AI-generated recommendations tailored to your account."
-            userPlan={plan}
-            feature="ai_suggestions"
-          />
-        )}
+        <LockedSection
+          title="AI-Powered Suggestions"
+          description="Get personalized, AI-generated recommendations tailored to your account."
+          userPlan={plan}
+          feature="ai_suggestions"
+        >
+          {data.aiSuggestions && <AISuggestionList suggestions={data.aiSuggestions} />}
+        </LockedSection>
 
         {/* AI Content Analysis — PRO+ unlocked, FREE locked */}
-        {data.aiScoring ? (
-          <AIScoreCard data={data.aiScoring} />
-        ) : (
-          <LockedSection
-            title="AI Content Analysis"
-            description="Get AI-powered content quality, brand consistency, and audience alignment ratings."
-            userPlan={plan}
-            feature="ai_suggestions"
-          />
-        )}
+        <LockedSection
+          title="AI Content Analysis"
+          description="Get AI-powered content quality, brand consistency, and audience alignment ratings."
+          userPlan={plan}
+          feature="ai_suggestions"
+        >
+          {data.aiScoring && <AIScoreCard data={data.aiScoring} />}
+        </LockedSection>
 
         <div className="grid md:grid-cols-2 gap-4">
           <LockedSection
