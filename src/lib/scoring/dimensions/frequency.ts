@@ -8,23 +8,31 @@ const thresholds: Record<Platform, { excellent: number; good: number; fair: numb
   tiktok:    { excellent: 15, good: 8,  fair: 4 },
 };
 
-export function scoreFrequency(posts: PostData[], platform?: Platform): FrequencyScore {
+export function scoreFrequency(posts: PostData[], platform?: Platform, totalPosts?: number): FrequencyScore {
   if (posts.length === 0) {
     return { score: 0, grade: "F", postsPerMonth: 0 };
   }
 
   // Extrapolate from time span instead of simple counting
-  // This avoids the 12-post fetch cap artificially limiting frequency
   const timestamps = posts.map((p) => new Date(p.timestamp).getTime()).sort((a, b) => a - b);
   const spanMs = timestamps[timestamps.length - 1] - timestamps[0];
   const spanDays = spanMs / (24 * 60 * 60 * 1000);
 
   let postsPerMonth: number;
   if (spanDays < 1) {
-    // All posts within a single day — use count as-is (likely very active)
     postsPerMonth = posts.length;
   } else {
     postsPerMonth = Math.round((posts.length / spanDays) * 30);
+  }
+
+  // Use profile total posts as a floor estimate for very active accounts
+  // If someone has 97K total posts, our 12-post sample likely underestimates
+  if (totalPosts && totalPosts > 1000) {
+    // Conservative estimate: assume account is ~5 years old minimum
+    const floorEstimate = Math.round(totalPosts / (5 * 12));
+    if (floorEstimate > postsPerMonth) {
+      postsPerMonth = Math.round((postsPerMonth + floorEstimate) / 2);
+    }
   }
 
   const { excellent, good, fair } = thresholds[platform || "instagram"];
