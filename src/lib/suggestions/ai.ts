@@ -27,14 +27,17 @@ Weakest Areas: ${weakest.join(", ")}
 
 Provide 3-5 concise, actionable suggestions. Each should be 1-2 sentences. Focus on the weakest areas.`;
 
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+  const baseUrl = (process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, "");
+  const model = process.env.OPENAI_MODEL_NAME || "gpt-4o-mini";
+
+  const res = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: "gpt-4o-mini",
+      model,
       messages: [{ role: "user", content: prompt }],
       temperature: 0.7,
       max_tokens: 500,
