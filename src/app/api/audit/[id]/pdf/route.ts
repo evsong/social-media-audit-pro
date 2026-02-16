@@ -33,8 +33,8 @@ export async function GET(
   const profile = raw?.profile as Record<string, unknown> | undefined;
   const aiSuggestions = raw?.aiSuggestions as string[] | undefined;
   const aiScoring = raw?.aiScoring as { grade: string; summary: string; dimensions: Record<string, { grade: string; comment: string }> } | undefined;
-  const bestTimes = raw?.bestTimes as { topSlots?: { day: string; hour: number; score: number }[] } | undefined;
-  const growthTrend = raw?.growthTrend as { direction: string; monthlyGrowthPercent: number; confidence: string } | undefined;
+  const bestTimes = raw?.bestTimes as { topSlots?: { day: number; hour: number; label: string; score: number }[] } | undefined;
+  const growthTrend = raw?.growthTrend as { direction: string; monthlyGrowthRate: number; confidence: string } | undefined;
   const fakeFollowers = raw?.fakeFollowers as { authenticPercent: number; confidence: string; riskFactors: string[] } | undefined;
 
   const doc = new jsPDF();
@@ -120,7 +120,7 @@ export async function GET(
     doc.setTextColor(80, 80, 80);
     for (const s of aiSuggestions) {
       y = ensureSpace(doc, y, 15);
-      const lines = doc.splitTextToSize(`✦ ${s}`, 170);
+      const lines = doc.splitTextToSize(`> ${s}`, 170);
       doc.text(lines, 20, y);
       y += lines.length * 4.5 + 2;
     }
@@ -174,10 +174,11 @@ export async function GET(
     doc.text("Growth Trend", 20, y);
     y += 8;
 
-    const arrow = growthTrend.direction === "growing" ? "↑" : growthTrend.direction === "declining" ? "↓" : "→";
+    const arrow = growthTrend.direction === "growing" ? "(+)" : growthTrend.direction === "declining" ? "(-)" : "(=)";
+    const pct = typeof growthTrend.monthlyGrowthRate === "number" ? `${growthTrend.monthlyGrowthRate}%` : "N/A";
     doc.setFontSize(10);
     doc.setTextColor(30, 30, 30);
-    doc.text(`${arrow} ${growthTrend.direction}  |  ${growthTrend.monthlyGrowthPercent}% est. monthly  |  ${growthTrend.confidence} confidence`, 20, y);
+    doc.text(`${arrow} ${growthTrend.direction}  |  ${pct} est. monthly  |  ${growthTrend.confidence} confidence`, 20, y);
     y += 8;
   }
 
@@ -194,7 +195,7 @@ export async function GET(
     doc.setTextColor(30, 30, 30);
     for (let i = 0; i < Math.min(3, bestTimes.topSlots.length); i++) {
       const slot = bestTimes.topSlots[i];
-      doc.text(`#${i + 1}  ${slot.day} ${String(slot.hour).padStart(2, "0")}:00`, 20, y);
+      doc.text(`#${i + 1}  ${slot.label || `Day${slot.day} ${String(slot.hour).padStart(2, "0")}:00`}`, 20, y);
       y += 6;
     }
     y += 2;
@@ -219,7 +220,7 @@ export async function GET(
       doc.setTextColor(80, 80, 80);
       for (const rf of fakeFollowers.riskFactors) {
         y = ensureSpace(doc, y, 10);
-        doc.text(`⚠ ${rf}`, 20, y);
+        doc.text(`[!] ${rf}`, 20, y);
         y += 5;
       }
     }
