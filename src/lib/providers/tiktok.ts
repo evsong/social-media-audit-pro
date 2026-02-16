@@ -43,7 +43,12 @@ export class TikTokProvider implements Provider {
   }
 
   async fetchPosts(username: string, limit: number): Promise<PostData[]> {
-    const data = await rapidApiFetch(`/api/user/posts?uniqueId=${encodeURIComponent(username)}&count=${limit}`);
+    // Posts API requires secUid — fetch it from user info first
+    const userInfo = await rapidApiFetch(`/api/user/info?uniqueId=${encodeURIComponent(username)}`);
+    const secUid = userInfo?.userInfo?.user?.secUid;
+    if (!secUid) return [];
+
+    const data = await rapidApiFetch(`/api/user/posts?secUid=${encodeURIComponent(secUid)}&count=${limit}`);
     if (!data?.itemList) return [];
 
     return data.itemList.slice(0, limit).map((item: Record<string, unknown>) => {
