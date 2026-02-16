@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+:root {
+  --brand-50: #effefb;
+  --brand-100: #c7fff3;
+  --brand-400: #1de4c3;
+  --brand-500: #0dc8aa;
+  --brand-600: #0d9488;
+  --brand-700: #0f766e;
+  --navy-900: #0A1628;
+  --navy-800: #111D33;
+  --navy-700: #1A2744;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--navy-900);
+  color: #fff;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Outfit', sans-serif;
+}
