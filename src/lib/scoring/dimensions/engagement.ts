@@ -2,10 +2,34 @@ import type { Platform, PostData, ProfileData } from "../../providers/types";
 import type { EngagementScore } from "../types";
 import { scoreToGrade } from "../grades";
 
-const baselines: Record<Platform, { a: number; b: number; c: number }> = {
-  instagram: { a: 3, b: 1, c: 0.5 },
-  tiktok: { a: 8, b: 4, c: 2 },
-  x: { a: 1.5, b: 0.5, c: 0.2 },
+type Tier = "small" | "medium" | "large" | "mega";
+
+function getFollowerTier(followers: number): Tier {
+  if (followers >= 1_000_000) return "mega";
+  if (followers >= 100_000) return "large";
+  if (followers >= 10_000) return "medium";
+  return "small";
+}
+
+const baselines: Record<Platform, Record<Tier, { a: number; b: number; c: number }>> = {
+  instagram: {
+    small:  { a: 3,   b: 1,    c: 0.5  },
+    medium: { a: 2,   b: 0.7,  c: 0.3  },
+    large:  { a: 1.2, b: 0.4,  c: 0.15 },
+    mega:   { a: 0.8, b: 0.25, c: 0.08 },
+  },
+  tiktok: {
+    small:  { a: 8, b: 4,   c: 2   },
+    medium: { a: 6, b: 3,   c: 1.5 },
+    large:  { a: 4, b: 2,   c: 0.8 },
+    mega:   { a: 3, b: 1.5, c: 0.5 },
+  },
+  x: {
+    small:  { a: 1.5, b: 0.5,  c: 0.2  },
+    medium: { a: 1.0, b: 0.3,  c: 0.1  },
+    large:  { a: 0.5, b: 0.15, c: 0.05 },
+    mega:   { a: 0.3, b: 0.1,  c: 0.03 },
+  },
 };
 
 export function scoreEngagement(
@@ -21,7 +45,8 @@ export function scoreEngagement(
   const avgEngagement = totalEngagement / posts.length;
   const rate = (avgEngagement / profile.followers) * 100;
 
-  const { a, b, c } = baselines[platform];
+  const tier = getFollowerTier(profile.followers);
+  const { a, b, c } = baselines[platform][tier];
   let score: number;
 
   if (rate >= a) {

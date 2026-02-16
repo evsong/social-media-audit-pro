@@ -1,8 +1,8 @@
-import type { PostData } from "../../providers/types";
+import type { Platform, PostData } from "../../providers/types";
 import type { HashtagScore } from "../types";
 import { scoreToGrade } from "../grades";
 
-export function scoreHashtags(posts: PostData[]): HashtagScore {
+export function scoreHashtags(posts: PostData[], platform?: Platform): HashtagScore {
   if (posts.length === 0) {
     return { score: 0, grade: "D", avgPerPost: 0 };
   }
@@ -20,8 +20,10 @@ export function scoreHashtags(posts: PostData[]): HashtagScore {
   } else if (avgPerPost > 30) {
     score = 55;
   } else {
-    // 0 hashtags
-    score = 50;
+    // 0 hashtags — platform-specific base score
+    if (platform === "x") score = 70;
+    else if (platform === "instagram") score = 55;
+    else score = 50;
   }
 
   score = Math.round(Math.min(100, score));

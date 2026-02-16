@@ -17,11 +17,11 @@ export function calculateScore(
   const weights = getWeights(platform);
 
   const engagement = scoreEngagement(platform, profile, posts);
-  const frequency = scoreFrequency(posts);
+  const frequency = scoreFrequency(posts, platform);
   const contentMix = scoreContentMix(platform, posts);
   const bio = scoreBio(platform, profile);
   const followerQuality = scoreFollowerQuality(profile);
-  const hashtags = scoreHashtags(posts);
+  const hashtags = scoreHashtags(posts, platform);
 
   const healthScore = Math.round(
     (engagement.score * weights.engagement +
