@@ -6,8 +6,8 @@ export async function generateAISuggestions(
   profile: ProfileData,
   scoreResult: ScoreResult
 ): Promise<string[]> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return ["AI suggestions unavailable. Please configure OPENAI_API_KEY."];
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return ["AI suggestions unavailable. Please configure ANTHROPIC_API_KEY."];
 
   const { grades } = scoreResult;
   const weakest = Object.entries(grades)
@@ -27,27 +27,24 @@ Weakest Areas: ${weakest.join(", ")}
 
 Provide 3-5 concise, actionable suggestions. Each should be 1-2 sentences. Focus on the weakest areas.`;
 
-  const baseUrl = (process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, "");
-  const model = process.env.OPENAI_MODEL_NAME || "gpt-4o-mini";
-
-  const res = await fetch(`${baseUrl}/chat/completions`, {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
-      model,
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.7,
+      model: "claude-opus-4-6",
       max_tokens: 500,
+      messages: [{ role: "user", content: prompt }],
     }),
   });
 
   if (!res.ok) return ["AI suggestions temporarily unavailable."];
 
   const data = await res.json();
-  const content = data.choices?.[0]?.message?.content || "";
+  const content = data.content?.[0]?.text || "";
 
   return content
     .split("\n")
