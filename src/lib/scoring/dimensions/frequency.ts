@@ -2,18 +2,47 @@ import type { Platform, PostData } from "../../providers/types";
 import type { FrequencyScore } from "../types";
 import { scoreToGrade } from "../grades";
 
-const thresholds: Record<Platform, { excellent: number; good: number; fair: number }> = {
-  x:         { excellent: 20, good: 12, fair: 4 },
-  instagram: { excellent: 12, good: 8,  fair: 4 },
-  tiktok:    { excellent: 15, good: 8,  fair: 4 },
+type Tier = "small" | "medium" | "large" | "mega" | "ultra";
+
+function getFollowerTier(followers: number): Tier {
+  if (followers >= 10_000_000) return "ultra";
+  if (followers >= 1_000_000) return "mega";
+  if (followers >= 100_000) return "large";
+  if (followers >= 10_000) return "medium";
+  return "small";
+}
+
+// Large accounts don't need to post as frequently to maintain presence
+const thresholds: Record<Platform, Record<Tier, { excellent: number; good: number; fair: number }>> = {
+  x: {
+    small:  { excellent: 20, good: 12, fair: 4 },
+    medium: { excellent: 16, good: 10, fair: 4 },
+    large:  { excellent: 12, good: 8,  fair: 3 },
+    mega:   { excellent: 10, good: 6,  fair: 2 },
+    ultra:  { excellent: 8,  good: 4,  fair: 2 },
+  },
+  instagram: {
+    small:  { excellent: 12, good: 8, fair: 4 },
+    medium: { excellent: 10, good: 6, fair: 3 },
+    large:  { excellent: 8,  good: 5, fair: 2 },
+    mega:   { excellent: 6,  good: 4, fair: 2 },
+    ultra:  { excellent: 4,  good: 3, fair: 1 },
+  },
+  tiktok: {
+    small:  { excellent: 15, good: 8, fair: 4 },
+    medium: { excellent: 12, good: 6, fair: 3 },
+    large:  { excellent: 10, good: 5, fair: 2 },
+    mega:   { excellent: 8,  good: 4, fair: 2 },
+    ultra:  { excellent: 6,  good: 3, fair: 1 },
+  },
 };
 
-export function scoreFrequency(posts: PostData[], platform?: Platform, totalPosts?: number): FrequencyScore {
+export function scoreFrequency(posts: PostData[], platform?: Platform, _totalPosts?: number, followers?: number): FrequencyScore {
   if (posts.length === 0) {
     return { score: 0, grade: "F", postsPerMonth: 0 };
   }
 
-  // Extrapolate from time span instead of simple counting
+  // Extrapolate from time span
   const timestamps = posts.map((p) => new Date(p.timestamp).getTime()).sort((a, b) => a - b);
   const spanMs = timestamps[timestamps.length - 1] - timestamps[0];
   const spanDays = spanMs / (24 * 60 * 60 * 1000);
@@ -25,17 +54,9 @@ export function scoreFrequency(posts: PostData[], platform?: Platform, totalPost
     postsPerMonth = Math.round((posts.length / spanDays) * 30);
   }
 
-  // Use profile total posts as a floor estimate for very active accounts
-  // If someone has 97K total posts, our 12-post sample likely underestimates
-  if (totalPosts && totalPosts > 1000) {
-    // Conservative estimate: assume account is ~5 years old minimum
-    const floorEstimate = Math.round(totalPosts / (5 * 12));
-    if (floorEstimate > postsPerMonth) {
-      postsPerMonth = Math.round((postsPerMonth + floorEstimate) / 2);
-    }
-  }
-
-  const { excellent, good, fair } = thresholds[platform || "instagram"];
+  const p = platform || "instagram";
+  const tier = getFollowerTier(followers || 0);
+  const { excellent, good, fair } = thresholds[p][tier];
 
   let score: number;
   if (postsPerMonth >= excellent) {

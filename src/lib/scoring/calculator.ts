@@ -17,7 +17,7 @@ export function calculateScore(
   const weights = getWeights(platform);
 
   const engagement = scoreEngagement(platform, profile, posts);
-  const frequency = scoreFrequency(posts, platform, profile.posts);
+  const frequency = scoreFrequency(posts, platform, profile.posts, profile.followers);
   const contentMix = scoreContentMix(platform, posts);
   const bio = scoreBio(platform, profile);
   const followerQuality = scoreFollowerQuality(profile);
