@@ -8,7 +8,7 @@
 ## 2. Database Schema & Auth
 
 - [x] 2.1 Create Prisma schema with User and AuditReport models (REQ-US-001)
-- [ ] 2.2 Run initial migration
+- [x] 2.2 Run initial migration
 - [x] 2.3 Configure NextAuth with email magic link provider (REQ-US-002)
 - [x] 2.4 Create /api/auth/[...nextauth]/route.ts handler
 - [x] 2.5 Create /api/audits/route.ts for audit history (REQ-US-003)
