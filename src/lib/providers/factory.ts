@@ -2,14 +2,15 @@ import type { Platform, Provider } from "./types";
 import { InstagramProvider } from "./instagram";
 import { TikTokProvider } from "./tiktok";
 import { XProvider } from "./x";
+import { MockProvider } from "./mock";
 
 export function getProvider(platform: Platform): Provider {
   switch (platform) {
     case "instagram":
-      return new InstagramProvider();
+      return process.env.RAPIDAPI_KEY ? new InstagramProvider() : new MockProvider(platform);
     case "tiktok":
-      return new TikTokProvider();
+      return process.env.RAPIDAPI_KEY ? new TikTokProvider() : new MockProvider(platform);
     case "x":
-      return new XProvider();
+      return process.env.X_BEARER_TOKEN ? new XProvider() : new MockProvider(platform);
   }
 }
