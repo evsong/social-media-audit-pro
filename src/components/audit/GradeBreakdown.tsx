@@ -1,8 +1,8 @@
 const gradeColors: Record<string, string> = {
   A: "#0d9488", "A-": "#0d9488",
   "B+": "#22c55e", B: "#22c55e", "B-": "#84cc16",
-  C: "#eab308",
-  D: "#ef4444",
+  "C+": "#eab308", C: "#eab308", "C-": "#f97316",
+  D: "#ef4444", F: "#dc2626",
 };
 
 export function GradeCard({

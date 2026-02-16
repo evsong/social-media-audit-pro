@@ -4,6 +4,9 @@ export function scoreToGrade(score: number): string {
   if (score >= 80) return "B+";
   if (score >= 70) return "B";
   if (score >= 65) return "B-";
-  if (score >= 60) return "C";
-  return "D";
+  if (score >= 60) return "C+";
+  if (score >= 50) return "C";
+  if (score >= 40) return "C-";
+  if (score >= 25) return "D";
+  return "F";
 }

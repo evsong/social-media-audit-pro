@@ -1,10 +1,10 @@
 import type { AIScoreResult } from "@/lib/suggestions/ai";
 
 const gradeColor: Record<string, string> = {
-  A: "text-emerald-400",
-  B: "text-teal-400",
-  C: "text-yellow-400",
-  D: "text-red-400",
+  A: "text-emerald-400", "A-": "text-emerald-400",
+  "B+": "text-teal-400", B: "text-teal-400", "B-": "text-teal-300",
+  "C+": "text-yellow-400", C: "text-yellow-400", "C-": "text-orange-400",
+  D: "text-red-400", F: "text-red-500",
 };
 
 const dimLabels: Record<string, string> = {

@@ -21,8 +21,17 @@ export function scoreContentMix(
     if (types["duet"] || types["stitch"]) {
       score = 90;
     }
+  } else if (platform === "x") {
+    // X is text-first — text-only is normal, not a penalty
+    if (uniqueTypes >= 3) {
+      score = 95;
+    } else if (uniqueTypes === 2) {
+      score = 85;
+    } else {
+      score = 75; // text-only is fine on X
+    }
   } else {
-    // Instagram and X
+    // Instagram — content diversity matters most
     if (uniqueTypes >= 3) {
       score = 92;
     } else if (uniqueTypes === 2) {

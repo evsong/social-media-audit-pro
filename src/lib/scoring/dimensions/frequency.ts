@@ -9,10 +9,23 @@ const thresholds: Record<Platform, { excellent: number; good: number; fair: numb
 };
 
 export function scoreFrequency(posts: PostData[], platform?: Platform): FrequencyScore {
-  const now = Date.now();
-  const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
-  const recentPosts = posts.filter((p) => new Date(p.timestamp).getTime() >= thirtyDaysAgo);
-  const postsPerMonth = recentPosts.length;
+  if (posts.length === 0) {
+    return { score: 0, grade: "F", postsPerMonth: 0 };
+  }
+
+  // Extrapolate from time span instead of simple counting
+  // This avoids the 12-post fetch cap artificially limiting frequency
+  const timestamps = posts.map((p) => new Date(p.timestamp).getTime()).sort((a, b) => a - b);
+  const spanMs = timestamps[timestamps.length - 1] - timestamps[0];
+  const spanDays = spanMs / (24 * 60 * 60 * 1000);
+
+  let postsPerMonth: number;
+  if (spanDays < 1) {
+    // All posts within a single day — use count as-is (likely very active)
+    postsPerMonth = posts.length;
+  } else {
+    postsPerMonth = Math.round((posts.length / spanDays) * 30);
+  }
 
   const { excellent, good, fair } = thresholds[platform || "instagram"];
 
