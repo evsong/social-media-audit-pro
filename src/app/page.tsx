@@ -83,7 +83,7 @@ export default function Home() {
             <a href="/privacy" className="hover:text-gray-300 transition">Privacy</a>
             <a href="/terms" className="hover:text-gray-300 transition">Terms</a>
             <a href="/blog" className="hover:text-gray-300 transition">Blog</a>
-            <a href="mailto:support@socialmediaaudittool.online" className="hover:text-gray-300 transition">Contact</a>
+            <a href="/contact" className="hover:text-gray-300 transition">Contact</a>
           </div>
           <div className="text-xs text-gray-600">© 2026 AuditPro</div>
         </div>
