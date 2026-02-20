@@ -17,4 +17,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   session: { strategy: "jwt" },
   trustHost: true,
+  callbacks: {
+    authorized({ auth, request }) {
+      const isLoggedIn = !!auth?.user;
+      const isProtected = request.nextUrl.pathname.startsWith("/dashboard");
+      if (isProtected && !isLoggedIn) return false;
+      return true;
+    },
+  },
 });

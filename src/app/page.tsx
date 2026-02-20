@@ -3,23 +3,6 @@ import { AuditForm } from "@/components/landing/AuditForm";
 export default function Home() {
   return (
     <main>
-      {/* NAV */}
-      <nav className="fixed top-0 w-full z-50 bg-[rgba(255,255,255,0.04)] backdrop-blur-xl border-b border-white/5">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0d9488] to-[#1de4c3] flex items-center justify-center">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/></svg>
-            </div>
-            <span className="font-bold text-lg tracking-tight">AuditPro</span>
-          </a>
-          <div className="hidden md:flex items-center gap-8 text-sm text-gray-400">
-            <a href="#features" className="hover:text-white transition">Features</a>
-            <a href="#pricing" className="hover:text-white transition">Pricing</a>
-            <a href="/auth/signin" className="px-4 py-2 bg-[#0d9488] hover:bg-[#0f766e] rounded-lg text-white text-sm font-medium transition">Sign In</a>
-          </div>
-        </div>
-      </nav>
-
       {/* HERO */}
       <section className="relative pt-32 pb-20 overflow-hidden">
         <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#0d9488]/10 rounded-full blur-[120px] pointer-events-none" />
@@ -104,9 +87,9 @@ function PriceCard({ title, price, period, features, popular }: {
       <ul className="space-y-3 text-sm text-gray-300 mb-8 flex-1">
         {features.map((f) => <li key={f} className="flex items-center gap-2"><span className="text-[#1de4c3]">✓</span>{f}</li>)}
       </ul>
-      <button className={`w-full py-2.5 rounded-lg text-sm font-semibold transition ${popular ? "bg-gradient-to-r from-[#0d9488] to-[#0dc8aa]" : "border border-white/10 hover:bg-white/5"}`}>
+      <a href={title === "Agency" ? "/contact" : "/auth/signin"} className={`block w-full py-2.5 rounded-lg text-sm font-semibold text-center transition ${popular ? "bg-gradient-to-r from-[#0d9488] to-[#0dc8aa]" : "border border-white/10 hover:bg-white/5"}`}>
         {title === "Agency" ? "Contact Sales" : popular ? "Upgrade to Pro" : "Get Started"}
-      </button>
+      </a>
     </div>
   );
 }

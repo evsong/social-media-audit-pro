@@ -18,6 +18,7 @@ export default function SignInPage() {
     try {
       const res = await signIn("resend", {
         email: email.trim(),
+        callbackUrl: "/dashboard",
         redirect: false,
       });
 
