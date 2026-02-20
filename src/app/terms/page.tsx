@@ -67,7 +67,11 @@ export default function TermsPage() {
             We may modify these terms at any time. Continued use of the service after changes constitutes acceptance of the updated terms.
           </Section>
 
-          <Section title="11. Contact">
+          <Section title="11. Third-Party Platforms">
+            AuditPro is an independent product and is not affiliated with, endorsed by, or sponsored by Instagram (Meta Platforms, Inc.), TikTok (ByteDance Ltd.), X/Twitter (X Corp.), or any of their parent companies. All platform names and trademarks belong to their respective owners.
+          </Section>
+
+          <Section title="12. Contact">
             Questions about these terms? Email <a href="mailto:support@socialmediaaudittool.online" className="text-[#1de4c3] hover:underline">support@socialmediaaudittool.online</a>.
           </Section>
         </div>

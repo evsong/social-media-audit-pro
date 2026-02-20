@@ -35,11 +35,12 @@ export default function BlogPage() {
 
         <div className="space-y-8">
           {posts.map((post) => (
-            <article key={post.slug} className="bg-[rgba(255,255,255,0.04)] border border-white/10 rounded-2xl p-6 hover:border-[#0d9488]/30 transition">
+            <a href={`/blog/${post.slug}`} key={post.slug} className="block bg-[rgba(255,255,255,0.04)] border border-white/10 rounded-2xl p-6 hover:border-[#0d9488]/30 transition">
               <time className="text-xs text-gray-500">{post.date}</time>
               <h2 className="font-semibold text-xl mt-1 mb-2">{post.title}</h2>
               <p className="text-gray-400 text-sm leading-relaxed">{post.excerpt}</p>
-            </article>
+              <span className="text-[#1de4c3] text-sm mt-3 inline-block">Read more →</span>
+            </a>
           ))}
         </div>
       </div>

@@ -60,15 +60,21 @@ export default function Home() {
 
       {/* FOOTER */}
       <footer className="border-t border-white/5 py-12">
-        <div className="max-w-5xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <span className="font-semibold text-sm">AuditPro</span>
-          <div className="flex items-center gap-6 text-xs text-gray-500">
-            <a href="/privacy" className="hover:text-gray-300 transition">Privacy</a>
-            <a href="/terms" className="hover:text-gray-300 transition">Terms</a>
-            <a href="/blog" className="hover:text-gray-300 transition">Blog</a>
-            <a href="/contact" className="hover:text-gray-300 transition">Contact</a>
+        <div className="max-w-5xl mx-auto px-6 flex flex-col items-center gap-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 w-full">
+            <span className="font-semibold text-sm">AuditPro</span>
+            <div className="flex items-center gap-6 text-xs text-gray-500">
+              <a href="/docs" className="hover:text-gray-300 transition">Docs</a>
+              <a href="/privacy" className="hover:text-gray-300 transition">Privacy</a>
+              <a href="/terms" className="hover:text-gray-300 transition">Terms</a>
+              <a href="/blog" className="hover:text-gray-300 transition">Blog</a>
+              <a href="/contact" className="hover:text-gray-300 transition">Contact</a>
+            </div>
+            <div className="text-xs text-gray-600">© 2026 AuditPro</div>
           </div>
-          <div className="text-xs text-gray-600">© 2026 AuditPro</div>
+          <p className="text-[10px] text-gray-600 text-center max-w-xl">
+            AuditPro is an independent product and is not affiliated with, endorsed by, or sponsored by Instagram, TikTok, X (Twitter), or any of their parent companies. All trademarks belong to their respective owners.
+          </p>
         </div>
       </footer>
     </main>
