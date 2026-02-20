@@ -17,7 +17,14 @@ export function AuditForm() {
       setError("Please select a platform");
       return;
     }
-    const name = username.trim();
+    let name = username.trim().replace(/^@/, "");
+    // Extract username from URLs like https://x.com/user, https://instagram.com/user
+    try {
+      const url = new URL(name.startsWith("http") ? name : `https://${name}`);
+      if (/(?:x|twitter|instagram|tiktok)\.com/.test(url.hostname)) {
+        name = url.pathname.split("/").filter(Boolean)[0] || name;
+      }
+    } catch { /* not a URL, use as-is */ }
     if (!name) {
       setError("Please enter a username");
       return;
