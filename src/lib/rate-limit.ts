@@ -58,6 +58,12 @@ export function incrementAnonymousCount(ip: string): void {
   dailyAuditLimit.set(ip, count + 1);
 }
 
+export function getAnonymousRemaining(ip: string): number {
+  resetDailyIfNeeded();
+  const count = dailyAuditLimit.get(ip) || 0;
+  return Math.max(0, 1 - count);
+}
+
 export async function checkUserLimit(
   userId: string,
   plan: Plan,
@@ -83,4 +89,21 @@ export async function checkUserLimit(
   }
 
   return { allowed: true, remaining: limit - count };
+}
+
+export async function getUserRemaining(
+  userId: string,
+  plan: Plan,
+  prisma: PrismaClient
+): Promise<number> {
+  const limit = getMonthlyAuditLimit(plan);
+  if (!isFinite(limit)) return Number.POSITIVE_INFINITY;
+
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const count = await prisma.auditReport.count({
+    where: { userId, createdAt: { gte: startOfMonth } },
+  });
+
+  return Math.max(0, limit - count);
 }

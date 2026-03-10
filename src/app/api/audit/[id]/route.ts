@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { scoreToGrade } from "@/lib/scoring/grades";
+import { getUserRemaining } from "@/lib/rate-limit";
 
 export async function GET(
   _req: NextRequest,
@@ -17,9 +18,17 @@ export async function GET(
 
   // Resolve user plan
   let userPlan = "FREE";
+  let remaining: number | null = 0;
+  const isAnonymous = !report.userId;
   if (report.userId) {
     const user = await prisma.user.findUnique({ where: { id: report.userId } });
-    if (user) userPlan = user.plan;
+    if (user) {
+      userPlan = user.plan;
+      const currentRemaining = await getUserRemaining(user.id, user.plan, prisma);
+      remaining = Number.isFinite(currentRemaining) ? currentRemaining : null;
+    }
+  } else {
+    remaining = 0;
   }
 
   return NextResponse.json({
@@ -31,6 +40,8 @@ export async function GET(
     profile: raw?.profile,
     auditId: report.id,
     userPlan,
+    remaining,
+    isAnonymous,
     aiSuggestions: raw?.aiSuggestions,
     aiScoring: raw?.aiScoring,
     bestTimes: raw?.bestTimes,

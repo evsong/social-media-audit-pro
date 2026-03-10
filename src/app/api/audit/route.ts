@@ -17,8 +17,10 @@ import type { Plan } from ".prisma/client";
 import {
   checkGlobalRateLimit,
   checkAnonymousLimit,
+  getAnonymousRemaining,
   incrementAnonymousCount,
   checkUserLimit,
+  getUserRemaining,
 } from "@/lib/rate-limit";
 
 const VALID_PLATFORMS: Platform[] = ["instagram", "tiktok", "x"];
@@ -64,10 +66,19 @@ export async function POST(req: NextRequest) {
   const key = cacheKey(platform, username, userPlan);
   const cached = cacheGet<Record<string, unknown>>(key);
   if (cached) {
-    return NextResponse.json({ ...cached, cached: true });
+    const remaining = userId
+      ? await getUserRemaining(userId, userPlan, prisma)
+      : getAnonymousRemaining(ip);
+    return NextResponse.json({
+      ...cached,
+      cached: true,
+      remaining: Number.isFinite(remaining) ? remaining : null,
+      isAnonymous: !userId,
+    });
   }
 
   // User/anonymous rate limit
+  let remaining = 0;
   if (userId) {
     const userCheck = await checkUserLimit(userId, userPlan, prisma);
     if (!userCheck.allowed) {
@@ -76,11 +87,13 @@ export async function POST(req: NextRequest) {
         { status: 429 }
       );
     }
+    remaining = userCheck.remaining ?? 0;
   } else {
     const anonCheck = checkAnonymousLimit(ip);
     if (!anonCheck.allowed) {
       return NextResponse.json({ error: anonCheck.message }, { status: 429 });
     }
+    remaining = anonCheck.remaining ?? 0;
   }
 
   // Fetch data from provider
@@ -143,7 +156,12 @@ export async function POST(req: NextRequest) {
     });
 
     // Increment rate limit counter
-    if (!userId) incrementAnonymousCount(ip);
+    if (!userId) {
+      incrementAnonymousCount(ip);
+      remaining = Math.max(0, remaining - 1);
+    } else if (Number.isFinite(remaining)) {
+      remaining = Math.max(0, remaining - 1);
+    }
 
     const response: Record<string, unknown> = {
       platform,
@@ -155,6 +173,8 @@ export async function POST(req: NextRequest) {
       cached: false,
       auditId: report.id,
       userPlan,
+      remaining: Number.isFinite(remaining) ? remaining : null,
+      isAnonymous: !userId,
     };
 
     if (aiSuggestions) response.aiSuggestions = aiSuggestions;

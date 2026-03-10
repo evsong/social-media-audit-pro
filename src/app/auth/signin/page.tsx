@@ -47,7 +47,7 @@ export default function SignInPage() {
         <div className="bg-[rgba(255,255,255,0.04)] backdrop-blur border border-white/10 rounded-2xl p-8">
           <h1 className="text-xl font-bold text-center mb-2">Sign in to AuditPro</h1>
           <p className="text-sm text-gray-500 text-center mb-6">
-            Get 5 free audits per month with an account
+            Get 3 free audits per month with an account
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
