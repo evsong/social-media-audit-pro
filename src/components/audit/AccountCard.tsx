@@ -24,7 +24,7 @@ export function AccountCard({
     <div className="bg-[rgba(255,255,255,0.04)] backdrop-blur border border-white/10 rounded-2xl p-6 flex items-start gap-5">
       {profile.avatar ? (
         <img
-          src={profile.avatar}
+          src={`/api/proxy-image?url=${encodeURIComponent(profile.avatar)}`}
           alt={profile.displayName}
           className="w-16 h-16 rounded-full object-cover border-2 border-white/10"
         />
