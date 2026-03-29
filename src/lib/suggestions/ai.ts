@@ -27,13 +27,43 @@ async function callClaude(prompt: string, maxTokens = 500): Promise<string | nul
     body: JSON.stringify({
       model,
       max_tokens: maxTokens,
+      stream: true,
       messages: [{ role: "user", content: prompt }],
     }),
   });
 
   if (!res.ok) return null;
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content || null;
+
+  // Read SSE stream and assemble content
+  const reader = res.body?.getReader();
+  if (!reader) return null;
+
+  const decoder = new TextDecoder();
+  let content = "";
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith("data: ") || trimmed === "data: [DONE]") continue;
+      try {
+        const chunk = JSON.parse(trimmed.slice(6));
+        const delta = chunk.choices?.[0]?.delta?.content;
+        if (delta) content += delta;
+      } catch {
+        // skip malformed chunks
+      }
+    }
+  }
+
+  return content || null;
 }
 
 export interface AIAnalysisResult {
