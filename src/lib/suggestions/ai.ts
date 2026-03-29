@@ -13,57 +13,44 @@ export interface AIScoreResult {
 
 async function callClaude(prompt: string, maxTokens = 500): Promise<string | null> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return null;
+  if (!apiKey) {
+    console.error("[AI] No ANTHROPIC_API_KEY set");
+    return null;
+  }
 
   const baseUrl = (process.env.ANTHROPIC_BASE_URL || "https://api.anthropic.com").replace(/\/+$/, "");
   const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
 
-  const res = await fetch(`${baseUrl}/v1/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: maxTokens,
-      stream: true,
-      messages: [{ role: "user", content: prompt }],
-    }),
-  });
+  console.log(`[AI] Calling ${baseUrl}/v1/chat/completions model=${model}`);
 
-  if (!res.ok) return null;
+  try {
+    const res = await fetch(`${baseUrl}/v1/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: maxTokens,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
 
-  // Read SSE stream and assemble content
-  const reader = res.body?.getReader();
-  if (!reader) return null;
-
-  const decoder = new TextDecoder();
-  let content = "";
-  let buffer = "";
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-
-    const lines = buffer.split("\n");
-    buffer = lines.pop() || "";
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed.startsWith("data: ") || trimmed === "data: [DONE]") continue;
-      try {
-        const chunk = JSON.parse(trimmed.slice(6));
-        const delta = chunk.choices?.[0]?.delta?.content;
-        if (delta) content += delta;
-      } catch {
-        // skip malformed chunks
-      }
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.error(`[AI] API error: ${res.status} ${res.statusText}`, body.slice(0, 500));
+      return null;
     }
-  }
 
-  return content || null;
+    const data = await res.json();
+    const content = data.choices?.[0]?.message?.content || null;
+    console.log(`[AI] Success, content length: ${content?.length || 0}`);
+    return content;
+  } catch (err) {
+    console.error("[AI] Fetch error:", err instanceof Error ? err.message : err);
+    return null;
+  }
 }
 
 export interface AIAnalysisResult {

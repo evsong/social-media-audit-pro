@@ -23,6 +23,8 @@ import {
   getUserRemaining,
 } from "@/lib/rate-limit";
 
+export const maxDuration = 60;
+
 const VALID_PLATFORMS: Platform[] = ["instagram", "tiktok", "x"];
 
 export async function POST(req: NextRequest) {
