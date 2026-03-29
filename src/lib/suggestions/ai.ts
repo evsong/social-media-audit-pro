@@ -16,14 +16,13 @@ async function callClaude(prompt: string, maxTokens = 500): Promise<string | nul
   if (!apiKey) return null;
 
   const baseUrl = (process.env.ANTHROPIC_BASE_URL || "https://api.anthropic.com").replace(/\/+$/, "");
-  const model = process.env.ANTHROPIC_MODEL || "claude-opus-4-6";
+  const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
 
-  const res = await fetch(`${baseUrl}/v1/messages`, {
+  const res = await fetch(`${baseUrl}/v1/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
+      "Authorization": `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
       model,
@@ -34,7 +33,7 @@ async function callClaude(prompt: string, maxTokens = 500): Promise<string | nul
 
   if (!res.ok) return null;
   const data = await res.json();
-  return data.content?.[0]?.text || null;
+  return data.choices?.[0]?.message?.content || null;
 }
 
 export interface AIAnalysisResult {
