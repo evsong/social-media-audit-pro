@@ -8,7 +8,7 @@ import { calculateScore } from "@/lib/scoring/calculator";
 import { generateTemplateSuggestions } from "@/lib/suggestions/templates";
 import { generateAIAnalysis } from "@/lib/suggestions/ai";
 import type { AIScoreResult } from "@/lib/suggestions/ai";
-import { cacheGet, cacheSet, cacheKey } from "@/lib/cache";
+// cache removed
 import { isPremium } from "@/lib/plan-gate";
 import { analyzeBestTimes } from "@/lib/analysis/best-time";
 import { analyzeGrowthTrend } from "@/lib/analysis/growth-trend";
@@ -64,20 +64,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Cache check — cached results don't count toward limits
-  const key = cacheKey(platform, username, userPlan);
-  const cached = cacheGet<Record<string, unknown>>(key);
-  if (cached) {
-    const remaining = userId
-      ? await getUserRemaining(userId, userPlan, prisma)
-      : getAnonymousRemaining(ip);
-    return NextResponse.json({
-      ...cached,
-      cached: true,
-      remaining: Number.isFinite(remaining) ? remaining : null,
-      isAnonymous: !userId,
-    });
-  }
+  // Cache disabled — always run fresh audit
 
   // User/anonymous rate limit
   let remaining = 0;
@@ -184,9 +171,6 @@ export async function POST(req: NextRequest) {
     if (bestTimes) response.bestTimes = bestTimes;
     if (growthTrend) response.growthTrend = growthTrend;
     if (fakeFollowers) response.fakeFollowers = fakeFollowers;
-
-    // Cache result
-    cacheSet(key, response);
 
     return NextResponse.json(response);
   } catch (err) {
