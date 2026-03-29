@@ -115,7 +115,7 @@ export default function AuditReportPage() {
   return (
     <main className="min-h-screen pb-20">
       <nav className="sticky top-0 z-50 bg-[rgba(255,255,255,0.04)] backdrop-blur-xl border-b border-white/5">
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#0d9488] to-[#1de4c3] flex items-center justify-center">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/></svg>
@@ -129,7 +129,7 @@ export default function AuditReportPage() {
         </div>
       </nav>
 
-      <div className="max-w-5xl mx-auto px-6 pt-10 space-y-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10 space-y-6 sm:space-y-8">
         <div className="grid md:grid-cols-[auto_1fr] gap-8 items-start">
           <HealthScore score={data.healthScore} grade={data.healthGrade} />
           <AccountCard profile={data.profile} platform={params.platform} />
@@ -145,8 +145,12 @@ export default function AuditReportPage() {
         )}
 
         {/* AI Suggestions — PRO+ unlocked, FREE locked */}
-        {plan && canAccessFeature(plan, "ai_suggestions") && data.aiSuggestions ? (
-          <AISuggestionList suggestions={data.aiSuggestions} />
+        {plan && canAccessFeature(plan, "ai_suggestions") ? (
+          data.aiSuggestions ? (
+            <AISuggestionList suggestions={data.aiSuggestions} />
+          ) : (
+            <ReauditPrompt title="AI-Powered Suggestions" platform={params.platform} username={params.username} />
+          )
         ) : (
           <LockedSection
             title="AI-Powered Suggestions"
@@ -157,8 +161,12 @@ export default function AuditReportPage() {
         )}
 
         {/* AI Content Analysis — PRO+ unlocked, FREE locked */}
-        {plan && canAccessFeature(plan, "ai_suggestions") && data.aiScoring ? (
-          <AIScoreCard data={data.aiScoring} />
+        {plan && canAccessFeature(plan, "ai_suggestions") ? (
+          data.aiScoring ? (
+            <AIScoreCard data={data.aiScoring} />
+          ) : (
+            <ReauditPrompt title="AI Content Analysis" platform={params.platform} username={params.username} />
+          )
         ) : (
           <LockedSection
             title="AI Content Analysis"
@@ -169,33 +177,60 @@ export default function AuditReportPage() {
         )}
 
         <div className="grid md:grid-cols-2 gap-4">
-          <LockedSection
-            title="Growth Trend"
-            description="Track engagement trajectory and estimated monthly growth rate."
-            userPlan={plan}
-            feature="growth_trend"
-          >
-            {data.growthTrend && <GrowthTrend data={data.growthTrend} />}
-          </LockedSection>
+          {plan && canAccessFeature(plan, "best_time") ? (
+            data.bestTimes ? (
+              <div className="bg-[rgba(255,255,255,0.04)] backdrop-blur border border-white/10 rounded-2xl p-6">
+                <h3 className="font-semibold text-lg mb-4">Best Time to Post</h3>
+                <BestTimeGrid data={data.bestTimes} />
+              </div>
+            ) : (
+              <ReauditPrompt title="Best Time to Post" platform={params.platform} username={params.username} />
+            )
+          ) : (
+            <LockedSection
+              title="Best Time to Post"
+              description="Discover when your audience is most active for maximum engagement."
+              userPlan={plan}
+              feature="best_time"
+            />
+          )}
 
-          <LockedSection
-            title="Best Time to Post"
-            description="Discover when your audience is most active for maximum engagement."
-            userPlan={plan}
-            feature="best_time"
-          >
-            {data.bestTimes && <BestTimeGrid data={data.bestTimes} />}
-          </LockedSection>
+          {plan && canAccessFeature(plan, "growth_trend") ? (
+            data.growthTrend ? (
+              <div className="bg-[rgba(255,255,255,0.04)] backdrop-blur border border-white/10 rounded-2xl p-6">
+                <h3 className="font-semibold text-lg mb-4">Growth Trend</h3>
+                <GrowthTrend data={data.growthTrend} />
+              </div>
+            ) : (
+              <ReauditPrompt title="Growth Trend" platform={params.platform} username={params.username} />
+            )
+          ) : (
+            <LockedSection
+              title="Growth Trend"
+              description="Track engagement trajectory and estimated monthly growth rate."
+              userPlan={plan}
+              feature="growth_trend"
+            />
+          )}
         </div>
 
-        <LockedSection
-          title="Fake Follower Detection"
-          description="Estimate the percentage of authentic followers and identify risk factors."
-          userPlan={plan}
-          feature="fake_follower_detection"
-        >
-          {data.fakeFollowers && <FakeFollowerCard data={data.fakeFollowers} />}
-        </LockedSection>
+        {plan && canAccessFeature(plan, "fake_follower_detection") ? (
+          data.fakeFollowers ? (
+            <div className="bg-[rgba(255,255,255,0.04)] backdrop-blur border border-white/10 rounded-2xl p-6">
+              <h3 className="font-semibold text-lg mb-4">Fake Follower Detection</h3>
+              <FakeFollowerCard data={data.fakeFollowers} />
+            </div>
+          ) : (
+            <ReauditPrompt title="Fake Follower Detection" platform={params.platform} username={params.username} />
+          )
+        ) : (
+          <LockedSection
+            title="Fake Follower Detection"
+            description="Estimate the percentage of authentic followers and identify risk factors."
+            userPlan={plan}
+            feature="fake_follower_detection"
+          />
+        )}
 
         {/* Competitor Compare link */}
         <LockedSection
@@ -215,5 +250,31 @@ export default function AuditReportPage() {
         <RemainingAudits remaining={data.remaining} isAnonymous={data.isAnonymous} />
       </div>
     </main>
+  );
+}
+
+function ReauditPrompt({ title, platform, username }: { title: string; platform: string; username: string }) {
+  const [loading, setLoading] = useState(false);
+
+  function handleReaudit() {
+    setLoading(true);
+    // Clear cached session data and re-navigate to trigger a fresh audit
+    sessionStorage.removeItem(`audit:${platform}:${username}`);
+    sessionStorage.removeItem(`auditId:${platform}:${username}`);
+    window.location.href = `/audit/loading?platform=${platform}&username=${encodeURIComponent(username)}`;
+  }
+
+  return (
+    <div className="bg-[rgba(255,255,255,0.04)] backdrop-blur border border-dashed border-[#0d9488]/40 rounded-2xl p-6 flex flex-col items-center justify-center gap-3 text-center">
+      <h3 className="font-semibold text-lg">{title}</h3>
+      <p className="text-sm text-gray-400">This audit was run before your plan upgrade. Re-run to unlock this feature.</p>
+      <button
+        onClick={handleReaudit}
+        disabled={loading}
+        className="px-5 py-2.5 bg-[#0d9488] hover:bg-[#0f766e] rounded-lg text-white text-sm font-semibold transition disabled:opacity-50"
+      >
+        {loading ? "Re-auditing..." : "Re-run Audit"}
+      </button>
+    </div>
   );
 }

@@ -4,14 +4,14 @@ export default function Home() {
   return (
     <main>
       {/* HERO */}
-      <section className="relative pt-32 pb-20 overflow-hidden">
+      <section className="relative pt-24 sm:pt-32 pb-14 sm:pb-20 overflow-hidden">
         <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#0d9488]/10 rounded-full blur-[120px] pointer-events-none" />
-        <div className="relative max-w-3xl mx-auto px-6 text-center">
+        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[rgba(255,255,255,0.04)] backdrop-blur border border-white/10 text-xs text-[#1de4c3] mb-6">
             <span className="w-1.5 h-1.5 rounded-full bg-[#1de4c3] animate-pulse" />
             Free audit — no login required
           </div>
-          <h1 className="font-extrabold text-5xl md:text-6xl leading-[1.1] tracking-tight mb-5">
+          <h1 className="font-extrabold text-3xl sm:text-5xl md:text-6xl leading-[1.1] tracking-tight mb-5">
             Audit your social media{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1de4c3] to-[#06b6d4]">
               in 60 seconds
